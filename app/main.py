@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from app.core.config import TITLE, VERSION
-from app.routes import common_router
+from app.settings.config import TITLE, VERSION
+from app.routes import common_rt, user_rt
 
 
 def initialize_application():
@@ -8,6 +8,7 @@ def initialize_application():
         title=TITLE,
         version=VERSION
     )
-    app.include_router(common_router)
+    app.include_router(common_rt)
+    app.include_router(user_rt)
     
     return app
