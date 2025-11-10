@@ -1,3 +1,4 @@
-from app.routes.common import common_router
+from .common import common_rt
+from .user import user_rt
 
-__all__ = ["common_router"]
+__all__ = ["common_rt", "user_rt"]
