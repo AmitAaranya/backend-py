@@ -1,2 +1,4 @@
+python-dotenv==1.2.1
 fastapi==0.121.1
 uvicorn==0.38.0
+google-cloud-firestore==2.21.0
