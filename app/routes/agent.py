@@ -49,3 +49,61 @@ def authenticate(payload: AuthRequest):
 	token_data = {"mobile_number": found["mobile_number"]}
 	token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
 	return {"message": "Agent authenticated", "token": token}
+
+@agent_rt.post("/followers/add", status_code=status.HTTP_200_OK)
+def add_follower(user_mobile: str, agent_mobile: str):
+    # Fetch all agents
+    agents = db.read_all_documents(TABLE_NAME) or {}
+
+    # Find the agent by mobile number
+    agent = None
+    for _id, a in agents.items():
+        if a.get("mobile_number") == agent_mobile:
+            agent = a
+            break
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Check if user exists
+    users = db.read_all_documents("User") or {}
+    user = None
+    for _id, u in users.items():
+        if u.get("mobile_number") == user_mobile:
+            user = u
+            break
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Add user to agent's followers
+    followers = agent.get("followers", [])
+    if user["unique_id"] not in followers:
+        followers.append(user["unique_id"])
+        db.update_data(TABLE_NAME, agent["unique_id"], {"followers": followers})
+
+    return {"message": "User added as follower"}
+
+@agent_rt.get("/followers", status_code=status.HTTP_200_OK)
+def list_followers(agent_mobile: str):
+    # Fetch all agents
+    agents = db.read_all_documents(TABLE_NAME) or {}
+
+    # Find the agent by mobile number
+    agent = None
+    for _id, a in agents.items():
+        if a.get("mobile_number") == agent_mobile:
+            agent = a
+            break
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    # Get followers' details
+    followers = agent.get("followers", [])
+    users = db.read_all_documents("User") or {}
+    follower_details = [
+        {"name": users[follower_id]["name"], "mobile_number": users[follower_id]["mobile_number"]}
+        for follower_id in followers if follower_id in users
+    ]
+    return follower_details

@@ -53,6 +53,16 @@ class FirestoreManager:
             logger.error(f"Failed to delete data from Firestore: {e}")
             raise
 
+    def update_data(self, collection_name, doc_id, data):
+        """Update specific fields in a Firestore document."""
+        try:
+            doc_ref = self.db.collection(collection_name).document(doc_id)
+            doc_ref.update(data)
+            logger.info(f"Document '{doc_id}' updated in collection '{collection_name}'.")
+        except Exception as e:
+            logger.error(f"Failed to update data in Firestore: {e}")
+            raise
+
     def read_all_documents(self, collection_name):
         """Read all documents from a collection."""
         try:
