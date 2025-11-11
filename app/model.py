@@ -4,7 +4,7 @@ import uuid
 from pydantic import BaseModel, Field, EmailStr
 
 class User(BaseModel):
-    unique_id: uuid.UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the user")
+    unique_id: str = Field(..., description="Unique identifier for the user")
     name: str = Field(..., min_length=2, max_length=100, description="Full name of the user")
     email_id: Optional[EmailStr] = Field(None, description="Email address of the user")
     password_hash: str = Field(..., min_length=8, description="Hashed password for authentication")
@@ -12,8 +12,7 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(tz=None), description="Date and time when the user was created")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        json_schema_extra  = {
             "example": {
                 "unique_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                 "name": "Rahul Sharma",
@@ -26,13 +25,13 @@ class User(BaseModel):
 
 
 class AgentUser(User):
-    followers: List[uuid.UUID] = Field(
+    followers: List[str] = Field(
         default_factory=list,
         description="List of unique IDs of users following this agent"
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra  = {
             "example": {
                 "unique_id": "b2b22b3d-2a6b-4df9-bd4a-3cdb1b11a4ce",
                 "name": "Agent Rajesh",

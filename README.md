@@ -40,13 +40,17 @@
    SECRET_KEY=your_secret_key_here
    ```
 
-6. **Run the application:**
+6. **Run the backend:**
    ```powershell
    python .\run.py
    ```
 
-7. **Access the application:**
+7. **Access the backend:**
    Open your browser and navigate to `http://127.0.0.1:8080`.
+
+8. **Access the Swagger UI:**
+   Open your browser and navigate to `http://127.0.0.1:8080/docs`.
+
 
 
 ## Notes
