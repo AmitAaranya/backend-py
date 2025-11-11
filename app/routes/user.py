@@ -3,6 +3,7 @@ import os
 import hashlib
 import binascii
 import datetime
+import jwt
 from fastapi import APIRouter, HTTPException, status
 
 from app.model import CreateUserRequest, AuthRequest, LogoutRequest
@@ -49,7 +50,10 @@ def authenticate(payload: AuthRequest):
 	if not _verify_password(found.get("password_hash", ""), payload.password):
 		raise HTTPException(status_code=401, detail="invalid credentials")
 
-	return {"message": "user authenticated"}
+	# Create JWT token
+	token_data = {"mobile_number": found["mobile_number"]}
+	token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
+	return {"message": "user authenticated", "token": token}
 
 
 def _hash_password(password: str) -> str:
@@ -67,3 +71,13 @@ def _verify_password(stored: str, provided: str) -> bool:
 		return binascii.hexlify(dk).decode() == hash_hex
 	except Exception:
 		return False
+	
+
+def _verify_jwt_token(token):
+    try:
+        payload = jwt.decode(token, ENV.SECRET_KEY, algorithms=["HS256"])
+        return True, payload
+    except jwt.ExpiredSignatureError:
+        return False, "Token expired"
+    except jwt.InvalidTokenError as e:
+        return False, str(e)
