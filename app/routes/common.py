@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.settings import ENV
+from app.settings import TITLE, VERSION
 from app.core import db
 
 
@@ -7,10 +7,10 @@ common_rt = APIRouter(prefix="", tags=["common"])
 
 @common_rt.get("/")
 def root():
-    return f"Hello World {ENV.GOOGLE_CREDENTIAL_PATH}"
+    return f"Hello from backend of {TITLE}@{VERSION}"
 
 
-@common_rt.get("/testdb")
-def test_db():
-    return str(db.read_all_documents("User"))
+# @common_rt.get("/testdb")
+# def test_db():
+#     return str(db.read_all_documents("User"))
 

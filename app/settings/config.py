@@ -1,7 +1,7 @@
 import os
 
 
-TITLE = "Farmer App"
+TITLE = "Farmer-App"
 VERSION = "alpha"
 
 class EnvInit:
