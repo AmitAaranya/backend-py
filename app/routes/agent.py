@@ -34,33 +34,29 @@ def create_user(payload: CreateUserRequest):
 
 @agent_rt.post("/auth")
 def authenticate(payload: AuthRequest):
-    users = db.read_all_documents(TableConfig.AGENT.name) or {}
-    found = None
-    for _id, u in users.items():
-        if u.get("mobile_number") == payload.mobile_number:
-            found = u
-            break
+    agent = db.read_data_by_mobile(
+        TableConfig.AGENT.value, payload.mobile_number)
 
-    if not found:
+    if not agent:
         raise HTTPException(status_code=404, detail="user not found")
 
-    if not verify_password(found.get("password_hash", ""), payload.password):
+    if not verify_password(agent.get("password_hash", ""), payload.password):
         raise HTTPException(status_code=401, detail="invalid credentials")
 
     # Create JWT token
-    token_data = {"mobile_number": found["mobile_number"]}
+    token_data = AgentResponse(**agent).model_dump()
     token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
     return {"message": "Agent authenticated", "token": token}
 
 
-@agent_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=AgentResponse)
-def fetch_user_by_mobile(mobile_number: str):
-    # Fetch user data by mobile number
-    agent = db.read_data_by_mobile(TableConfig.AGENT.value, mobile_number)
-    if not agent:
-        raise HTTPException(status_code=404, detail="Agent not found")
+# @agent_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=AgentResponse)
+# def fetch_user_by_mobile(mobile_number: str):
+#     # Fetch user data by mobile number
+#     agent = db.read_data_by_mobile(TableConfig.AGENT.value, mobile_number)
+#     if not agent:
+#         raise HTTPException(status_code=404, detail="Agent not found")
 
-    return AgentResponse(**agent)
+#     return AgentResponse(**agent)
 
 
 @agent_rt.post("/followers/add", status_code=status.HTTP_200_OK)
