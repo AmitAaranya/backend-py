@@ -19,14 +19,14 @@ def create_user(payload: CreateUserRequest):
         raise HTTPException(
             status_code=400, detail="Mobile number already registered")
 
-    user_obj = User(unique_id=str(uuid.uuid4()),
+    user_obj = User(id=str(uuid.uuid4()),
                     name=payload.name,
                     email_id=payload.email_id,
                     password_hash=hash_password(payload.password),
                     mobile_number=payload.mobile_number
                     ).model_dump()
 
-    db.add_data(TableConfig.USER.value, user_obj['unique_id'], user_obj)
+    db.add_data(TableConfig.USER.value, user_obj['id'], user_obj)
 
     return {"message": "user created"}
 

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, EmailStr
 
 
 class User(BaseModel):
-    unique_id: str = Field(..., description="Unique identifier for the user")
+    id: str = Field(..., description="Unique identifier for the user")
     name: str = Field(..., min_length=2, max_length=100,
                       description="Full name of the user")
     email_id: Optional[EmailStr] = Field(
@@ -22,7 +22,7 @@ class User(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "unique_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+                "id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                 "name": "Rahul Sharma",
                 "email_id": "rahul.sharma@example.com",
                 "mobile_number": "+919876543210",
@@ -32,9 +32,11 @@ class User(BaseModel):
 
 
 class UserResponse(BaseModel):
+    id: str
     name: str
     email_id: Any
     mobile_number: str
+    role: str = "user"
 
 
 class AgentUser(User):
@@ -47,7 +49,7 @@ class AgentUser(User):
     class Config:
         json_schema_extra = {
             "example": {
-                "unique_id": "b2b22b3d-2a6b-4df9-bd4a-3cdb1b11a4ce",
+                "id": "b2b22b3d-2a6b-4df9-bd4a-3cdb1b11a4ce",
                 "name": "Agent Rajesh",
                 "email_id": "agent.rajesh@example.com",
                 "mobile_number": "+919812345678",
@@ -61,10 +63,12 @@ class AgentUser(User):
 
 
 class AgentResponse(BaseModel):
+    id: str
     name: str
     email_id: Any
     mobile_number: str
     bio: Optional[str]
+    role: str = "agent"
 
 
 class CreateUserRequest(BaseModel):
