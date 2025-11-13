@@ -20,7 +20,7 @@ def create_user(payload: CreateAgentRequest):
         raise HTTPException(
             status_code=400, detail="Mobile number already registered")
 
-    agent_obj = AgentUser(unique_id=str(uuid.uuid4()),
+    agent_obj = AgentUser(id=str(uuid.uuid4()),
                           name=payload.name,
                           email_id=payload.email_id,
                           password_hash=hash_password(payload.password),
@@ -28,7 +28,7 @@ def create_user(payload: CreateAgentRequest):
                           bio=payload.bio
                           ).model_dump()
 
-    db.add_data(TableConfig.AGENT.value, agent_obj['unique_id'], agent_obj)
+    db.add_data(TableConfig.AGENT.value, agent_obj['id'], agent_obj)
 
     return {"message": "Agent created"}
 
