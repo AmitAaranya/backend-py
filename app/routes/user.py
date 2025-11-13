@@ -33,30 +33,25 @@ def create_user(payload: CreateUserRequest):
 
 @user_rt.post("/auth")
 def authenticate(payload: AuthRequest):
-    users = db.read_all_documents(TableConfig.USER.value) or {}
-    found = None
-    for _id, u in users.items():
-        if u.get("mobile_number") == payload.mobile_number:
-            found = u
-            break
-
-    if not found:
+    user = db.read_data_by_mobile(
+        TableConfig.USER.value, payload.mobile_number)
+    if not user:
         raise HTTPException(status_code=404, detail="user not found")
 
-    if not verify_password(found.get("password_hash", ""), payload.password):
+    if not verify_password(user.get("password_hash", ""), payload.password):
         raise HTTPException(status_code=401, detail="invalid credentials")
 
     # Create JWT token
-    token_data = {"mobile_number": found["mobile_number"]}
+    token_data = UserResponse(**user).model_dump()
     token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
     return {"message": "user authenticated", "token": token}
 
 
-@user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
-def fetch_user_by_mobile(mobile_number: str):
-    # Fetch user data by mobile number
-    user = db.read_data_by_mobile(TableConfig.USER.value, mobile_number)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+# @user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
+# def fetch_user_by_mobile(mobile_number: str):
+#     # Fetch user data by mobile number
+#     user = db.read_data_by_mobile(TableConfig.USER.value, mobile_number)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
 
-    return UserResponse(**user)
+#     return UserResponse(**user)
