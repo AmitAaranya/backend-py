@@ -37,7 +37,7 @@ class UserResponse(BaseModel):
     mobile_number: str
 
 
-class AgentUser(BaseModel):
+class AgentUser(User):
     followers: List[str] = Field(
         default_factory=list,
         description="List of unique IDs of users following this agent"
