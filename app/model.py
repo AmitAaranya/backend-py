@@ -38,6 +38,7 @@ class UserResponse(BaseModel):
 
 
 class AgentUser(User):
+    bio: Optional[str]
     followers: List[str] = Field(
         default_factory=list,
         description="List of unique IDs of users following this agent"
@@ -63,6 +64,7 @@ class AgentResponse(BaseModel):
     name: str
     email_id: Any
     mobile_number: str
+    bio: Optional[str]
 
 
 class CreateUserRequest(BaseModel):
@@ -71,6 +73,14 @@ class CreateUserRequest(BaseModel):
     mobile_number: str = Field(..., pattern=r'^\+91\d{10}$')
     password: str = Field(..., min_length=8)
     # pincode: str = Field(..., pattern=r'^\d{6}$', description="6-digit Indian postal code (Pincode)")
+
+
+class CreateAgentRequest(BaseModel):
+    name: str = Field(..., min_length=2)
+    email_id: Optional[EmailStr] = None
+    mobile_number: str = Field(..., pattern=r'^\+91\d{10}$')
+    bio: Optional[str]
+    password: str = Field(..., min_length=8)
 
 
 class AuthRequest(BaseModel):

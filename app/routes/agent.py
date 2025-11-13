@@ -2,7 +2,7 @@ import uuid
 import jwt
 from fastapi import APIRouter, HTTPException, status
 
-from app.model import AuthRequest, CreateUserRequest, AgentUser, TableConfig, AgentResponse
+from app.model import AuthRequest, CreateAgentRequest, AgentUser, TableConfig, AgentResponse
 from app.settings import ENV
 from app.core import db
 from app.utils.security import hash_password, verify_password
@@ -12,9 +12,9 @@ agent_rt = APIRouter(prefix="/agent", tags=["Agent"])
 
 
 @agent_rt.post("/create", status_code=status.HTTP_201_CREATED)
-def create_user(payload: CreateUserRequest):
+def create_user(payload: CreateAgentRequest):
     # check for existing mobile
-    users = db.read_all_documents(TableConfig.AGENT.name) or {}
+    users = db.read_all_documents(TableConfig.AGENT.value) or {}
     for _id, u in users.items():
         if u.get("mobile_number") == payload.mobile_number:
             raise HTTPException(
@@ -24,10 +24,11 @@ def create_user(payload: CreateUserRequest):
                           name=payload.name,
                           email_id=payload.email_id,
                           password_hash=hash_password(payload.password),
-                          mobile_number=payload.mobile_number
+                          mobile_number=payload.mobile_number,
+                          bio=payload.bio
                           ).model_dump()
 
-    db.add_data(TableConfig.AGENT.name, agent_obj['unique_id'], agent_obj)
+    db.add_data(TableConfig.AGENT.value, agent_obj['unique_id'], agent_obj)
 
     return {"message": "Agent created"}
 
