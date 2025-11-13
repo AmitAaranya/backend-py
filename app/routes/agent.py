@@ -13,12 +13,12 @@ agent_rt = APIRouter(prefix="/agent", tags=["Agent"])
 
 @agent_rt.post("/create", status_code=status.HTTP_201_CREATED)
 def create_user(payload: CreateAgentRequest):
-    # check for existing mobile
-    users = db.read_all_documents(TableConfig.AGENT.value) or {}
-    for _id, u in users.items():
-        if u.get("mobile_number") == payload.mobile_number:
-            raise HTTPException(
-                status_code=400, detail="Mobile number already registered")
+    agent = db.read_data_by_mobile(
+        TableConfig.AGENT.value, payload.mobile_number)
+
+    if agent:
+        raise HTTPException(
+            status_code=400, detail="Mobile number already registered")
 
     agent_obj = AgentUser(unique_id=str(uuid.uuid4()),
                           name=payload.name,
@@ -60,29 +60,28 @@ def authenticate(payload: AuthRequest):
 #     return AgentResponse(**agent)
 
 
-@agent_rt.post("/followers/add", status_code=status.HTTP_200_OK)
-def add_follower(user_mobile: str, agent_mobile: str):
-    # Fetch all agents
+@agent_rt.get("/list", status_code=status.HTTP_200_OK)
+def list_agents():
+    # Fetch all agents from the database
     agents = db.read_all_documents(TableConfig.AGENT.value) or {}
 
-    # Find the agent by mobile number
-    agent = None
-    for _id, a in agents.items():
-        if a.get("mobile_number") == agent_mobile:
-            agent = a
-            break
+    # Format the response to include only necessary details
+    agent_list = [AgentResponse(**agent) for agent in agents]
+
+    return agent_list
+
+
+@agent_rt.post("/followers/add", status_code=status.HTTP_200_OK)
+def add_follower(user_mobile: str, agent_mobile: str):
+    agent = db.read_data_by_mobile(
+        TableConfig.AGENT.value, agent_mobile)
 
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
     # Check if user exists
-    users = db.read_all_documents("User") or {}
-    user = None
-    for _id, u in users.items():
-        if u.get("mobile_number") == user_mobile:
-            user = u
-            break
-
+    user = db.read_data_by_mobile(
+        TableConfig.USER.value, user_mobile)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -98,25 +97,18 @@ def add_follower(user_mobile: str, agent_mobile: str):
 
 @agent_rt.get("/followers", status_code=status.HTTP_200_OK)
 def list_followers(agent_mobile: str):
-    # Fetch all agents
-    agents = db.read_all_documents(TableConfig.AGENT.value) or {}
-
-    # Find the agent by mobile number
-    agent = None
-    for _id, a in agents.items():
-        if a.get("mobile_number") == agent_mobile:
-            agent = a
-            break
-
+    agent = db.read_data_by_mobile(
+        TableConfig.AGENT.value, agent_mobile)
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
     # Get followers' details
     followers = agent.get("followers", [])
-    users = db.read_all_documents("User") or {}
-    follower_details = [
-        {"name": users[follower_id]["name"],
-            "mobile_number": users[follower_id]["mobile_number"]}
-        for follower_id in followers if follower_id in users
-    ]
+    follower_details = []
+    for follower_id in followers:
+        user = db.read_data(TableConfig.USER.value, follower_id)
+        if user:
+            follower_details.append(
+                {"name": user.get("name", ""), "mobile_number": user.get("mobile_number", "")})
+
     return follower_details
