@@ -2,7 +2,7 @@ import uuid
 import jwt
 from fastapi import APIRouter, HTTPException, status
 
-from app.model import AuthRequest, CreateUserRequest, AgentUser, TableConfig
+from app.model import AuthRequest, CreateUserRequest, AgentUser, TableConfig, AgentResponse
 from app.settings import ENV
 from app.core import db
 from app.utils.security import hash_password, verify_password
@@ -53,14 +53,14 @@ def authenticate(payload: AuthRequest):
     return {"message": "Agent authenticated", "token": token}
 
 
-@agent_rt.get("/fetch", status_code=status.HTTP_200_OK)
+@agent_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=AgentResponse)
 def fetch_user_by_mobile(mobile_number: str):
     # Fetch user data by mobile number
-    user = db.read_data_by_mobile(TableConfig.AGENT.value, mobile_number)
-    if not user:
+    agent = db.read_data_by_mobile(TableConfig.AGENT.value, mobile_number)
+    if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
-    return user
+    return AgentResponse(**agent)
 
 
 @agent_rt.post("/followers/add", status_code=status.HTTP_200_OK)

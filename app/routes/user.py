@@ -2,7 +2,7 @@ import uuid
 import jwt
 from fastapi import APIRouter, HTTPException, status
 
-from app.model import AuthRequest, CreateUserRequest, User, TableConfig
+from app.model import AuthRequest, CreateUserRequest, User, TableConfig, UserResponse
 from app.settings import ENV
 from app.core import db
 from app.utils.security import hash_password, verify_password
@@ -52,11 +52,11 @@ def authenticate(payload: AuthRequest):
     return {"message": "user authenticated", "token": token}
 
 
-@user_rt.get("/fetch", status_code=status.HTTP_200_OK)
+@user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
 def fetch_user_by_mobile(mobile_number: str):
     # Fetch user data by mobile number
     user = db.read_data_by_mobile(TableConfig.USER.value, mobile_number)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    return user
+    return UserResponse(**user)

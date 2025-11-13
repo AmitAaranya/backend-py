@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Optional
 import uuid
 from pydantic import BaseModel, Field, EmailStr
 
@@ -26,13 +26,18 @@ class User(BaseModel):
                 "name": "Rahul Sharma",
                 "email_id": "rahul.sharma@example.com",
                 "mobile_number": "+919876543210",
-                "pincode": "813105",
                 "created_at": "2025-11-10T10:30:00Z"
             }
         }
 
 
-class AgentUser(User):
+class UserResponse(BaseModel):
+    name: str
+    email_id: Any
+    mobile_number: str
+
+
+class AgentUser(BaseModel):
     followers: List[str] = Field(
         default_factory=list,
         description="List of unique IDs of users following this agent"
@@ -45,7 +50,6 @@ class AgentUser(User):
                 "name": "Agent Rajesh",
                 "email_id": "agent.rajesh@example.com",
                 "mobile_number": "+919812345678",
-                "pincode": "813105",
                 "created_at": "2025-11-10T10:30:00Z",
                 "followers": [
                     "d290f1ee-6c54-4b01-90e6-d701748f0851",
@@ -53,6 +57,12 @@ class AgentUser(User):
                 ]
             }
         }
+
+
+class AgentResponse(BaseModel):
+    name: str
+    email_id: Any
+    mobile_number: str
 
 
 class CreateUserRequest(BaseModel):
