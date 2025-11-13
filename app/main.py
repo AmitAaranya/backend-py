@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.settings.config import TITLE, VERSION
 from app.routes import *
 
+
 def initialize_application():
     app = FastAPI(
         title=TITLE,
@@ -19,6 +20,6 @@ def initialize_application():
     app.include_router(common_rt)
     app.include_router(user_rt)
     app.include_router(agent_rt)
+    app.include_router(chat_rt)
 
-    
     return app

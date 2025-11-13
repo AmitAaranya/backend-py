@@ -1,24 +1,32 @@
 from datetime import datetime
-from typing import Any, List, Literal, Optional
+from enum import Enum
+from typing import List, Optional
 import uuid
 from pydantic import BaseModel, Field, EmailStr
 
+
 class User(BaseModel):
     unique_id: str = Field(..., description="Unique identifier for the user")
-    name: str = Field(..., min_length=2, max_length=100, description="Full name of the user")
-    email_id: Optional[EmailStr] = Field(None, description="Email address of the user")
-    password_hash: str = Field(..., min_length=8, description="Hashed password for authentication")
-    mobile_number: str = Field(..., pattern=r'^\+91\d{10}$', description="User's mobile number in +91XXXXXXXXXX format (India only)")
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=None), description="Date and time when the user was created")
+    name: str = Field(..., min_length=2, max_length=100,
+                      description="Full name of the user")
+    email_id: Optional[EmailStr] = Field(
+        None, description="Email address of the user")
+    mobile_number: str = Field(..., pattern=r'^\+91\d{10}$',
+                               description="User's mobile number in +91XXXXXXXXXX format (India only)")
+    # pincode: str = Field(..., pattern=r'^\d{6}$', description="6-digit Indian postal code (Pincode)")
+    password_hash: Optional[str] = Field(
+        "", min_length=8, description="Hashed password for authentication")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(
+        tz=None), description="Date and time when the user was created")
 
     class Config:
-        json_schema_extra  = {
+        json_schema_extra = {
             "example": {
                 "unique_id": "d290f1ee-6c54-4b01-90e6-d701748f0851",
                 "name": "Rahul Sharma",
                 "email_id": "rahul.sharma@example.com",
-                "password_hash": "$2b$12$XhNqD89aB2gLxZ8x9jKx2eQqGqK0nZxXbVZqY7tQ3xWp6r1H4U5rK",
                 "mobile_number": "+919876543210",
+                "pincode": "813105",
                 "created_at": "2025-11-10T10:30:00Z"
             }
         }
@@ -31,14 +39,14 @@ class AgentUser(User):
     )
 
     class Config:
-        json_schema_extra  = {
+        json_schema_extra = {
             "example": {
                 "unique_id": "b2b22b3d-2a6b-4df9-bd4a-3cdb1b11a4ce",
                 "name": "Agent Rajesh",
                 "email_id": "agent.rajesh@example.com",
-                "password_hash": "$2b$12$XhNqD89aB2gLxZ8x9jKx2eQqGqK0nZxXbVZqY7tQ3xWp6r1H4U5rK",
                 "mobile_number": "+919812345678",
-                 "created_at": "2025-11-10T10:30:00Z",
+                "pincode": "813105",
+                "created_at": "2025-11-10T10:30:00Z",
                 "followers": [
                     "d290f1ee-6c54-4b01-90e6-d701748f0851",
                     "c3f2a64a-4e02-4a59-9a5e-8e6f8a28b4a7"
@@ -47,20 +55,24 @@ class AgentUser(User):
         }
 
 
-
-
 class CreateUserRequest(BaseModel):
-	name: str = Field(..., min_length=2)
-	email_id: Optional[EmailStr] = None
-	password: str = Field(..., min_length=8)
-	mobile_number: str = Field(..., pattern=r'^\+91\d{10}$')
+    name: str = Field(..., min_length=2)
+    email_id: Optional[EmailStr] = None
+    mobile_number: str = Field(..., pattern=r'^\+91\d{10}$')
+    password: str = Field(..., min_length=8)
+    # pincode: str = Field(..., pattern=r'^\d{6}$', description="6-digit Indian postal code (Pincode)")
 
 
 class AuthRequest(BaseModel):
-	mobile_number:  str = Field(..., pattern=r'^\+91\d{10}$')
-	password:str =  Field(..., min_length=8)
+    mobile_number:  str = Field(..., pattern=r'^\+91\d{10}$')
+    password: str = Field(..., min_length=8)
 
 
 class LogoutRequest(BaseModel):
-	token: str
-      
+    token: str
+
+
+class TableConfig(Enum):
+    USER = "User"
+    AGENT = "AgentUser"
+    CHAT = "ChatHistory"
