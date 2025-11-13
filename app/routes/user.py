@@ -13,11 +13,11 @@ user_rt = APIRouter(prefix="/user", tags=["user"])
 @user_rt.post("/create", status_code=status.HTTP_201_CREATED)
 def create_user(payload: CreateUserRequest):
     # check for existing mobile
-    users = db.read_all_documents(TableConfig.USER.value) or {}
-    for _id, u in users.items():
-        if u.get("mobile_number") == payload.mobile_number:
-            raise HTTPException(
-                status_code=400, detail="Mobile number already registered")
+    user = db.read_data_by_mobile(
+        TableConfig.USER.value, payload.mobile_number)
+    if user:
+        raise HTTPException(
+            status_code=400, detail="Mobile number already registered")
 
     user_obj = User(unique_id=str(uuid.uuid4()),
                     name=payload.name,

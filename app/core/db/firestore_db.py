@@ -105,7 +105,7 @@ class FirestoreManager:
         """Read all documents from a collection."""
         try:
             docs = self.db.collection(collection_name).stream()
-            all_docs = {doc.id: doc.to_dict() for doc in docs}
+            all_docs = [doc.to_dict() for doc in docs]
             logger.info(
                 f"Fetched all documents from collection '{collection_name}'.")
             return all_docs
