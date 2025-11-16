@@ -1,6 +1,8 @@
+from collections import deque
 import io
+import os
 from fastapi import APIRouter, Depends, File, HTTPException, Header, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
 
 from app.settings import ENV, TITLE, VERSION
 from app.core import storage, firebase
@@ -94,6 +96,21 @@ async def get_profile_image(user_id=Depends(get_user_id),
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve image: {e}"
         )
+
+
+@common_rt.get("/logs", response_class=PlainTextResponse)
+async def read_logs():
+    LOG_FILE_PATH = "app.log"
+    if not os.path.exists(LOG_FILE_PATH):
+        raise HTTPException(status_code=404, detail="Log file not found")
+
+    try:
+        with open(LOG_FILE_PATH, "r") as file:
+            last_lines = deque(file, maxlen=50)
+        return "".join(list(last_lines)[::-1])
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error reading log file: {str(e)}")
 
 
 @common_rt.post("/protected")
