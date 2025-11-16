@@ -1,8 +1,10 @@
 import binascii
 import hashlib
 import os
+from fastapi import HTTPException, Header
 import jwt
 
+from app.core import firebase
 from app.settings import ENV
 
 
@@ -32,3 +34,22 @@ def verify_jwt_token(token, secret_key):
         return False, "Token expired"
     except jwt.InvalidTokenError as e:
         return False, str(e)
+
+
+def get_user_id(authorization: str = Header(...),
+                token_source: str = Header(..., alias="X-Token-Source")):
+    """Extract and validate JWT from Authorization header."""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401, detail="Invalid authorization header")
+
+    token = authorization.split(" ")[1]
+
+    try:
+        if token_source == "firebase":
+            return firebase.verify_token(token).get("User UID")
+        else:
+            payload = jwt.decode(token, ENV.SECRET_KEY, algorithms=["HS256"])
+        return payload.get("id")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token {str(e)}")

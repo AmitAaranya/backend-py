@@ -32,7 +32,7 @@ class StorageManager:
         blob.upload_from_string(image_bytes, content_type=content_type)
         return blob.public_url
 
-    def download_image_bytes(self, *, bucket_name: Optional[str] = None, blob_name: str) -> bytes:
+    def get_image_bytes(self, *, bucket_name: Optional[str] = None, blob_name: str) -> bytes:
 
         if bucket_name is None:
             raise ValueError(
