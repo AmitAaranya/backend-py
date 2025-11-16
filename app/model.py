@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 import uuid
 from pydantic import BaseModel, Field, EmailStr
 
@@ -103,7 +103,37 @@ class LogoutRequest(BaseModel):
     token: str
 
 
+class SellItem(BaseModel):
+    id: str = Field(..., description="Unique identifier")
+    docs_id: str = Field(..., description="Extracted from docs URL")
+    name: str
+    content: Literal["PDF", "VIDEO"]
+    url: str
+    desc: str
+    desc_hn: str
+    price: str
+
+
+class SellItemPayload(BaseModel):
+    name: str
+    content: Literal["PDF", "VIDEO"]
+    url: str
+    desc: str
+    desc_hn: str
+    price: str
+
+
+class SellItemResponse(BaseModel):
+    id: str = Field(..., description="Unique identifier")
+    name: str
+    content: Literal["PDF", "VIDEO"]
+    desc: str
+    desc_hn: str
+    price: str
+
+
 class TableConfig(Enum):
     USER = "User"
     AGENT = "AgentUser"
     CHAT = "ChatHistory"
+    SELL_ITEM = "SellItem"
