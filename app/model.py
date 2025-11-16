@@ -109,18 +109,9 @@ class SellItem(BaseModel):
     name: str
     content: Literal["PDF", "VIDEO"]
     url: str
-    desc: str
-    desc_hn: str
-    price: str
-
-
-class SellItemPayload(BaseModel):
-    name: str
-    content: Literal["PDF", "VIDEO"]
-    url: str
-    desc: str
-    desc_hn: str
-    price: str
+    desc: Optional[str]
+    desc_hn: Optional[str]
+    price: float
 
 
 class SellItemResponse(BaseModel):
@@ -129,7 +120,7 @@ class SellItemResponse(BaseModel):
     content: Literal["PDF", "VIDEO"]
     desc: str
     desc_hn: str
-    price: str
+    price: float
 
 
 class TableConfig(Enum):
