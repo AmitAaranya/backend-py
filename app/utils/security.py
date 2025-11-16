@@ -1,6 +1,7 @@
 import binascii
 import hashlib
 import os
+from fastapi import HTTPException, Header
 import jwt
 
 from app.settings import ENV
@@ -32,3 +33,18 @@ def verify_jwt_token(token, secret_key):
         return False, "Token expired"
     except jwt.InvalidTokenError as e:
         return False, str(e)
+
+
+def get_current_user(authorization: str = Header(...)):
+    """Extract and validate JWT from Authorization header."""
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401, detail="Invalid authorization header")
+
+    token = authorization.split(" ")[1]
+
+    try:
+        payload = jwt.decode(token, ENV.SECRET_KEY, algorithms=["HS256"])
+        return payload   # payload contains user_id and other fields
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token {str(e)}")
