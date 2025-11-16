@@ -1,4 +1,5 @@
 data/google_cred.json
+data/firebase_service_account.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

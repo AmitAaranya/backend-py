@@ -1,21 +1,22 @@
 import uuid
 import jwt
-from fastapi import APIRouter, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Header, status, UploadFile, File
 
 from app.model import AuthRequest, CreateUserRequest, User, TableConfig, UserResponse
 from app.settings import ENV
 from app.core import db
 from app.core import storage
-from app.utils.security import hash_password, verify_password
+from app.utils.security import get_user_id, hash_password, verify_password
 
 user_rt = APIRouter(prefix="/user", tags=["user"])
 
 
-@user_rt.post("/create", status_code=status.HTTP_201_CREATED)
-def create_user(payload: CreateUserRequest):
+@user_rt.post("/password/create", status_code=status.HTTP_201_CREATED)
+def create_user(payload: CreateUserRequest, role: str = Header("user", alias="X-Role")):
     # check for existing mobile
+    table_Name = TableConfig[role.upper()].value
     user = db.read_data_by_mobile(
-        TableConfig.USER.value, payload.mobile_number)
+        table_Name, payload.mobile_number)
     if user:
         raise HTTPException(
             status_code=400, detail="Mobile number already registered")
@@ -27,15 +28,15 @@ def create_user(payload: CreateUserRequest):
                     mobile_number=payload.mobile_number
                     ).model_dump()
 
-    db.add_data(TableConfig.USER.value, user_obj['id'], user_obj)
+    db.add_data(table_Name, user_obj['id'], user_obj)
 
     return {"message": "user created"}
 
 
-@user_rt.post("/auth")
-def authenticate(payload: AuthRequest):
+@user_rt.post("/password/auth")
+def authenticate(payload: AuthRequest, role: str = Header("user", alias="X-Role")):
     user = db.read_data_by_mobile(
-        TableConfig.USER.value, payload.mobile_number)
+        TableConfig[role.upper()].value, payload.mobile_number)
     if not user:
         raise HTTPException(status_code=404, detail="user not found")
 
@@ -48,11 +49,12 @@ def authenticate(payload: AuthRequest):
     return {"message": "user authenticated", "token": token}
 
 
-# @user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
-# def fetch_user_by_mobile(mobile_number: str):
-#     # Fetch user data by mobile number
-#     user = db.read_data_by_mobile(TableConfig.USER.value, mobile_number)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
+@user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
+def fetch_user(user_id=Depends(get_user_id),
+               role: str = Header("user", alias="X-Role")):
+    # Fetch user data by mobile number
+    user = db.read_data(TableConfig[role.upper()].value, doc_id=user_id)
+    if not user:
+        return UserResponse()
 
-#     return UserResponse(**user)
+    return UserResponse(**user)

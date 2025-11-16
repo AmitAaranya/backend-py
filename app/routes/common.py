@@ -1,10 +1,10 @@
 import io
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Header, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app.settings import ENV, TITLE, VERSION
-from app.core import db, storage
-from app.utils.security import get_current_user
+from app.core import storage, firebase
+from app.utils.security import get_user_id
 from app.utils.image import thumbnail
 
 
@@ -24,18 +24,13 @@ def root():
 @common_rt.post("/profile/photo/upload", status_code=status.HTTP_200_OK)
 async def upload_profile_image(
     image: UploadFile = File(...),
-    user=Depends(get_current_user)
+    user_id=Depends(get_user_id),
+    role: str = Header("user", alias="X-Role")
 ):
 
-    user_id = user.get("id")   # <-- extract from JWT
     if not user_id:
         raise HTTPException(
             status_code=400, detail="Invalid token payload (id)")
-
-    role = user.get("role")
-    if not role:
-        raise HTTPException(
-            status_code=400, detail="Invalid token payload (role)")
 
     if not image:
         raise HTTPException(status_code=400, detail="No image file provided")
@@ -68,20 +63,14 @@ async def upload_profile_image(
 
 
 @common_rt.get("/profile/photo", status_code=status.HTTP_200_OK)
-async def get_profile_image(user=Depends(get_current_user)):
+async def get_profile_image(user_id=Depends(get_user_id),
+                            role: str = Header("user", alias="X-Role")):
     """
     Retrieve the profile image for the current user as image data.
     """
-    user_id = user.get("id")
     if not user_id:
         raise HTTPException(
             status_code=400, detail="Invalid token payload (id)"
-        )
-
-    role = user.get("role")
-    if not role:
-        raise HTTPException(
-            status_code=400, detail="Invalid token payload (role)"
         )
 
     blob_name = f"profile/{role}/{user_id}.png"
@@ -105,3 +94,13 @@ async def get_profile_image(user=Depends(get_current_user)):
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve image: {e}"
         )
+
+
+@common_rt.post("/protected")
+def protected_route(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing auth header")
+
+    token = authorization.split(" ")[1]  # remove "Bearer"
+
+    return firebase.verify_token(token)

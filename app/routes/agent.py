@@ -11,55 +11,6 @@ from app.utils.security import hash_password, verify_password
 agent_rt = APIRouter(prefix="/agent", tags=["Agent"])
 
 
-@agent_rt.post("/create", status_code=status.HTTP_201_CREATED)
-def create_user(payload: CreateAgentRequest):
-    agent = db.read_data_by_mobile(
-        TableConfig.AGENT.value, payload.mobile_number)
-
-    if agent:
-        raise HTTPException(
-            status_code=400, detail="Mobile number already registered")
-
-    agent_obj = AgentUser(id=str(uuid.uuid4()),
-                          name=payload.name,
-                          email_id=payload.email_id,
-                          password_hash=hash_password(payload.password),
-                          mobile_number=payload.mobile_number,
-                          bio=payload.bio
-                          ).model_dump()
-
-    db.add_data(TableConfig.AGENT.value, agent_obj['id'], agent_obj)
-
-    return {"message": "Agent created"}
-
-
-@agent_rt.post("/auth")
-def authenticate(payload: AuthRequest):
-    agent = db.read_data_by_mobile(
-        TableConfig.AGENT.value, payload.mobile_number)
-
-    if not agent:
-        raise HTTPException(status_code=404, detail="user not found")
-
-    if not verify_password(agent.get("password_hash", ""), payload.password):
-        raise HTTPException(status_code=401, detail="invalid credentials")
-
-    # Create JWT token
-    token_data = AgentResponse(**agent).model_dump()
-    token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
-    return {"message": "Agent authenticated", "token": token}
-
-
-# @agent_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=AgentResponse)
-# def fetch_user_by_mobile(mobile_number: str):
-#     # Fetch user data by mobile number
-#     agent = db.read_data_by_mobile(TableConfig.AGENT.value, mobile_number)
-#     if not agent:
-#         raise HTTPException(status_code=404, detail="Agent not found")
-
-#     return AgentResponse(**agent)
-
-
 @agent_rt.get("/list", status_code=status.HTTP_200_OK)
 def list_agents():
     # Fetch all agents from the database

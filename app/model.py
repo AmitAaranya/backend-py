@@ -32,11 +32,9 @@ class User(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: str
-    name: str
-    email_id: Any
-    mobile_number: str
-    role: str = "user"
+    name: str = ""
+    email_id: Any = ""
+    mobile_number: str = ""
 
 
 class AgentUser(User):
