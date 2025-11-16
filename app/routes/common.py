@@ -50,7 +50,7 @@ async def upload_profile_image(
 
     blob_name = f"profile/{role}/{user_id}.png"
     try:
-        public_url = storage.upload_image_bytes(
+        public_url = storage.upload_bytes(
             image_bytes=thumbnail_image_bytes,
             bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
             blob_name=blob_name,
@@ -79,7 +79,7 @@ async def get_profile_image(user_id=Depends(get_user_id),
 
     try:
         # Assuming storage has a method to get the image bytes
-        image_bytes = storage.get_image_bytes(
+        image_bytes = storage.get_bytes(
             bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
             blob_name=blob_name
         )

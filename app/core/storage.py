@@ -15,7 +15,7 @@ class StorageManager:
         else:
             self.client = storage.Client()
 
-    def upload_image_bytes(self, image_bytes: bytes, *, bucket_name: Optional[str] = None, blob_name: Optional[str] = None, content_type: str = "image/png") -> str:
+    def upload_bytes(self, image_bytes: bytes, *, bucket_name: Optional[str] = None, blob_name: Optional[str] = None, content_type: str = "image/png") -> str:
 
         if not image_bytes:
             raise ValueError("image_bytes must be provided and non-empty")
@@ -32,7 +32,7 @@ class StorageManager:
         blob.upload_from_string(image_bytes, content_type=content_type)
         return blob.public_url
 
-    def get_image_bytes(self, *, bucket_name: Optional[str] = None, blob_name: str) -> bytes:
+    def get_bytes(self, *, bucket_name: Optional[str] = None, blob_name: str) -> bytes:
 
         if bucket_name is None:
             raise ValueError(

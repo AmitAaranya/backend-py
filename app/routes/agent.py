@@ -70,13 +70,14 @@ def list_followers(agent_mobile: str):
 
 @agent_rt.post("/sell/item", status_code=status.HTTP_200_OK)
 async def add_selling_item(
-        url: str = Form(...),
+        url: Optional[str] = Form(""),
         name: str = Form(...),
-        content: Literal["PDF", "VIDEO"] = Form(...),
+        content: Literal["PDF", "DOCS"] = Form(...),
         desc: Optional[str] = Form(None),
         desc_hn: Optional[str] = Form(None),
         price: float = Form(...),
-        image: UploadFile = File(...)
+        image: UploadFile = File(...),
+        pdf: Optional[UploadFile] = File(None)
 ):
 
     if not image:
@@ -94,20 +95,37 @@ async def add_selling_item(
     id = str(uuid.uuid4())
     thumbnail_image_bytes = thumbnail(image_bytes)
 
-    blob_name = f"sell_item/{id}.png"
-    storage.upload_image_bytes(
+    blob_name = f"sell_item/{id}/thumbnail.png"
+    storage.upload_bytes(
         image_bytes=thumbnail_image_bytes,
         bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
         blob_name=blob_name,
         content_type="image/png",
     )
-
-    docs_id = extract_google_docs_id(url)
-    if not docs_id:
-        raise HTTPException(400, "Please provide correct Google docs URL")
+    filename = ""
+    docs_id = ""
+    if content == "PDF" and pdf:
+        try:
+            pdf_bytes = await pdf.read()
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to read uploaded file: {e}"
+            )
+        filename = str(pdf.filename)
+        pdf_blob_name = f"sell_item/{id}/{filename}"
+        storage.upload_bytes(
+            image_bytes=pdf_bytes,
+            bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
+            blob_name=pdf_blob_name,
+            content_type="application/pdf",
+        )
+    elif content == "DOCS" and url:
+        docs_id = extract_google_docs_id(url)
+        if not docs_id:
+            raise HTTPException(400, "Please provide correct Google docs URL")
 
     item = SellItem(id=id, docs_id=docs_id, name=name, content=content,
-                    url=url, desc=desc, desc_hn=desc_hn, price=price)
+                    desc=desc, desc_hn=desc_hn, price=price, filename=filename)
 
     db.add_data(TableConfig.SELL_ITEM.name, id, item.model_dump())
     return {"message": "Item added successfully"}
@@ -119,13 +137,33 @@ async def fetch_doc():
     return [SellItemResponse(**item) for item in items]
 
 
-@agent_rt.get("/sell/item/{id}", response_class=HTMLResponse)
+@agent_rt.get("/sell/item/{id}")
 def fetch_docs_html(id):
     item = db.read_data(TableConfig.SELL_ITEM.name, id)
     if not item:
         raise HTTPException(404, "Document not found")
 
-    return docs.fetch(item.get('docs_id'))
+    if item.get("content") == "PDF":
+        filename = item.get("filename")
+        pdf_blob_name = f"sell_item/{id}/{filename}"
+        try:
+            # Assuming storage has a method to get the image bytes
+            pdf_bytes = storage.get_bytes(
+                bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
+                blob_name=pdf_blob_name
+            )
+            if not pdf_bytes:
+                raise HTTPException(
+                    status_code=404, detail="PDF not found"
+                )
+            return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf")
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to retrieve image: {e}"
+            )
+    elif item.get('content') == "DOCS":
+        return docs.fetch(item.get('docs_id'))
 
 
 @agent_rt.get("/sell/item/photo/{id}", status_code=status.HTTP_200_OK)
@@ -133,7 +171,7 @@ async def get_profile_image(id):
 
     blob_name = f"sell_item/{id}.png"
     try:
-        image_bytes = storage.get_image_bytes(
+        image_bytes = storage.get_bytes(
             bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
             blob_name=blob_name
         )

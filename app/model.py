@@ -107,17 +107,17 @@ class SellItem(BaseModel):
     id: str = Field(..., description="Unique identifier")
     docs_id: str = Field(..., description="Extracted from docs URL")
     name: str
-    content: Literal["PDF", "VIDEO"]
-    url: str
+    content: Literal["PDF", "DOCS"]
     desc: Optional[str]
     desc_hn: Optional[str]
+    filename: Optional[str] = ""
     price: float
 
 
 class SellItemResponse(BaseModel):
     id: str = Field(..., description="Unique identifier")
     name: str
-    content: Literal["PDF", "VIDEO"]
+    content: Literal["PDF", "DOCS"]
     desc: str
     desc_hn: str
     price: float
