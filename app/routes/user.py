@@ -11,7 +11,7 @@ from app.utils.security import get_user_id, hash_password, verify_password
 user_rt = APIRouter(prefix="/user", tags=["user"])
 
 
-@user_rt.post("/password/create", status_code=status.HTTP_201_CREATED)
+@user_rt.post("/pw/create", status_code=status.HTTP_201_CREATED)
 def create_user(payload: CreateUserRequest, role: str = Header("user", alias="X-Role")):
     # check for existing mobile
     table_Name = TableConfig[role.upper()].value
@@ -33,7 +33,7 @@ def create_user(payload: CreateUserRequest, role: str = Header("user", alias="X-
     return {"message": "user created"}
 
 
-@user_rt.post("/password/auth")
+@user_rt.post("/pw/auth")
 def authenticate(payload: AuthRequest, role: str = Header("user", alias="X-Role")):
     user = db.read_data_by_mobile(
         TableConfig[role.upper()].value, payload.mobile_number)
@@ -60,7 +60,7 @@ def fetch_user(user_id=Depends(get_user_id),
     return UserResponse(**user)
 
 
-@user_rt.post("phone/create", status_code=status.HTTP_200_OK, response_model=UserResponse)
+@user_rt.post("/ph/create", status_code=status.HTTP_200_OK, response_model=UserResponse)
 def create_user_mobile_login(
     user_data: PhoneUserCreateRequest,
     user_id=Depends(get_user_id),
