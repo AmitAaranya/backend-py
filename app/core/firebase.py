@@ -19,4 +19,4 @@ class FirebaseManager:
             return decoded_token
         except Exception as e:
             raise HTTPException(
-                status_code=401, detail="Invalid or expired token")
+                status_code=401, detail=f"Invalid or expired token {e}")

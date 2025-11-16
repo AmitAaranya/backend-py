@@ -47,7 +47,7 @@ def get_user_id(authorization: str = Header(...),
 
     try:
         if token_source == "firebase":
-            return firebase.verify_token(token).get("User UID")
+            return firebase.verify_token(token).get("uid")
         else:
             payload = jwt.decode(token, ENV.SECRET_KEY, algorithms=["HS256"])
         return payload.get("id")
