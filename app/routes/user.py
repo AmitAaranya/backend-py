@@ -2,7 +2,7 @@ import uuid
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Header, status, UploadFile, File
 
-from app.model import AuthRequest, CreateUserRequest, User, TableConfig, UserResponse
+from app.model import AuthRequest, CreateUserRequest, PhoneUserCreateRequest, User, TableConfig, UserResponse
 from app.settings import ENV
 from app.core import db
 from app.core import storage
@@ -58,3 +58,27 @@ def fetch_user(user_id=Depends(get_user_id),
         return UserResponse()
 
     return UserResponse(**user)
+
+
+@user_rt.post("phone/create", status_code=status.HTTP_200_OK, response_model=UserResponse)
+def create_user_mobile_login(
+    user_data: PhoneUserCreateRequest,
+    user_id=Depends(get_user_id),
+    role: str = Header("user", alias="X-Role")
+):
+    # Fetch existing user data
+    table_name = TableConfig[role.upper()].value
+    existing_user = db.read_data(table_name, doc_id=user_id)
+    if existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_obj = User(id=user_id,
+                    name=user_data.name,
+                    email_id=user_data.email_id,
+                    mobile_number=user_data.mobile_number,
+                    password_hash="000000000"
+                    ).model_dump()
+
+    db.add_data(table_name, user_id, user_obj)
+
+    return {"message": "user created"}

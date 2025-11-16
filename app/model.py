@@ -37,6 +37,15 @@ class UserResponse(BaseModel):
     mobile_number: str = ""
 
 
+class PhoneUserCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100,
+                      description="Full name of the user")
+    mobile_number: str = Field(..., pattern=r'^\+91\d{10}$',
+                               description="User's mobile number in +91XXXXXXXXXX format (India only)")
+    email_id: Optional[EmailStr] = Field(
+        None, description="Email address of the user")
+
+
 class AgentUser(User):
     bio: Optional[str]
     followers: List[str] = Field(
