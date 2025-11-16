@@ -169,7 +169,7 @@ def fetch_docs_html(id):
 @agent_rt.get("/sell/item/photo/{id}", status_code=status.HTTP_200_OK)
 async def get_profile_image(id):
 
-    blob_name = f"sell_item/{id}.png"
+    blob_name = f"sell_item/{id}/thumbnail.png"
     try:
         image_bytes = storage.get_bytes(
             bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
