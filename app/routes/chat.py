@@ -1,5 +1,4 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
 from app.core import db
 from app.utils.chat_manager import ConnectionManager, save_message
 from app.model import TableConfig
@@ -22,22 +21,19 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
     await manager.connect(websocket, doc_id, role)
 
     # Send existing chat history
-    chat_doc = db.read_data(TableConfig.CHAT.value, doc_id)
-    if chat_doc:
-        messages = chat_doc.get("messages", [])
-        # Sort messages by timestamp for correct order
-        messages.sort(key=lambda x: x["timestamp"])
-        for msg in messages:
-            await websocket.send_text(f"{msg['role']}: {msg['message']} ({msg['timestamp']})")
+    messages = db.read_data(TableConfig.CHAT.value, doc_id)
+    if messages:
+        await manager.send_json(websocket, messages)
 
     try:
         while True:
-            data = await websocket.receive_text()
+            message = await websocket.receive_json()
+
             # Save to Firestore
-            save_message(doc_id, role, data)
+            save_message(doc_id, message)
             # Send to the other participant
             other_role = "agent" if role == "user" else "user"
-            await manager.send_to_role(doc_id, other_role, f"{role}: {data}")
+            await manager.send_to_role(doc_id, other_role, message)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print(f"{role} ({doc_id}) disconnected")
