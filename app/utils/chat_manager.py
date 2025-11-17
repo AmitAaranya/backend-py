@@ -17,7 +17,8 @@ class ConnectionManager:
         if doc_id not in self.active_chats:
             self.active_chats[doc_id] = {}
         self.active_chats[doc_id][role] = websocket
-        await websocket.send_text(f"Connected as {role} for chat {doc_id}")
+        previous_chat = db.read_data(TableConfig.CHAT.value, doc_id)
+        await websocket.send_json(previous_chat)
 
     def disconnect(self, websocket: WebSocket):
         for doc_id, roles in list(self.active_chats.items()):
