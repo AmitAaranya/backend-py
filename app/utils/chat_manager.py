@@ -1,6 +1,4 @@
-# Manage connected clients
-from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 from fastapi import WebSocket
 
 from app.model import TableConfig
@@ -30,18 +28,18 @@ class ConnectionManager:
                         del self.active_chats[doc_id]
                     return
 
-    async def send_to_role(self, doc_id: str, role: str, message: str):
+    async def send_json(self, websocket: WebSocket, data: Any):
+        await websocket.send_json(data)
+
+    async def send_to_role(self, doc_id: str, role: str, message: dict):
         if doc_id in self.active_chats and role in self.active_chats[doc_id]:
-            await self.active_chats[doc_id][role].send_text(message)
+            await self.active_chats[doc_id][role].send_json(message)
+
+    async def send_chat_history(self, doc_id: str):
+        return db.read_data(TableConfig.CHAT.value, doc_id)
 
 
 # Save message with timestamp
-def save_message(doc_id: str, role: str, message: str):
-    timestamp = datetime.now(tz=None).isoformat()
-    msg_data = {
-        "role": role,
-        "message": message,
-        "timestamp": timestamp
-    }
-    db.append_data(TableConfig.CHAT.value, doc_id, msg_data)
+def save_message(doc_id: str, message: dict):
+    db.append_data(TableConfig.CHAT.value, doc_id, message)
     return
