@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.core import db
 from app.utils.chat_manager import ConnectionManager, save_message
-from app.model import TableConfig
+from app.settings import logger
 
 chat_rt = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -20,11 +20,6 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
     doc_id = f"{user_id}_{agent_id}"
     await manager.connect(websocket, doc_id, role)
 
-    # Send existing chat history
-    messages = db.read_data(TableConfig.CHAT.value, doc_id)
-    if messages:
-        await manager.send_json(websocket, messages)
-
     try:
         while True:
             message = await websocket.receive_json()
@@ -36,4 +31,4 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
             await manager.send_to_role(doc_id, other_role, message)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        print(f"{role} ({doc_id}) disconnected")
+        logger.debug(f"{role} ({doc_id}) disconnected")
