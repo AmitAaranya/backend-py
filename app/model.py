@@ -37,6 +37,7 @@ class UserPsAuthResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
+    id: str = ""
     name: str = ""
     email_id: Any = ""
     mobile_number: str = ""
