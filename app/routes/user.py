@@ -2,7 +2,7 @@ import uuid
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Header, status, UploadFile, File
 
-from app.model import AuthRequest, CreateUserRequest, PhoneUserCreateRequest, User, TableConfig, UserResponse
+from app.model import AuthRequest, CreateUserRequest, PhoneUserCreateRequest, User, TableConfig, UserPsAuthResponse, UserResponse
 from app.settings import ENV
 from app.core import db
 from app.core import storage
@@ -44,7 +44,7 @@ def authenticate(payload: AuthRequest, role: str = Header("user", alias="X-Role"
         raise HTTPException(status_code=401, detail="invalid credentials")
 
     # Create JWT token
-    token_data = UserResponse(**user).model_dump()
+    token_data = UserPsAuthResponse(**user).model_dump()
     token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
     return {"message": "user authenticated", "token": token}
 

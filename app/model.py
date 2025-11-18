@@ -31,6 +31,11 @@ class User(BaseModel):
         }
 
 
+class UserPsAuthResponse(BaseModel):
+    id: str = ""
+    role: str = "user"
+
+
 class UserResponse(BaseModel):
     name: str = ""
     email_id: Any = ""
