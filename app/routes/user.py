@@ -55,9 +55,9 @@ def fetch_user(user_id=Depends(get_user_id),
     # Fetch user data by mobile number
     user = db.read_data(TableConfig[role.upper()].value, doc_id=user_id)
     if not user:
-        return UserResponse()
+        raise HTTPException(status_code=401, detail="No User logged in")
 
-    return UserResponse(**user)
+    return UserResponse(**user, role=role)
 
 
 @user_rt.post("/ph/create", status_code=status.HTTP_200_OK, response_model=UserResponse)

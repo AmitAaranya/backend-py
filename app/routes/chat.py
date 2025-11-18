@@ -1,5 +1,4 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.core import db
 from app.utils.chat_manager import ConnectionManager, save_message
 from app.settings import logger
 

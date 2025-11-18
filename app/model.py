@@ -35,6 +35,7 @@ class UserResponse(BaseModel):
     name: str = ""
     email_id: Any = ""
     mobile_number: str = ""
+    role: str = "user"
 
 
 class PhoneUserCreateRequest(BaseModel):
