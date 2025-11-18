@@ -39,6 +39,21 @@ class ConnectionManager:
     async def send_chat_history(self, doc_id: str):
         return db.read_data(TableConfig.CHAT.value, doc_id)
 
+    def list_all_chat_agent(self):
+        all_chat = db.read_raw_all_documents(TableConfig.CHAT.value)
+
+        chat_response = []
+        for chat in all_chat:
+            try:
+                chat_response.append({
+                    "id": chat._data.get("messages")[-1].get("user").get("_id"),
+                    "userName": chat._data.get("messages")[-1].get("user").get("name"),
+                    "lastMessage": chat._data.get("messages")[-1].get("text"),
+                })
+            except:
+                pass
+        return chat_response
+
 
 # Save message with timestamp
 def save_message(doc_id: str, message: dict):
