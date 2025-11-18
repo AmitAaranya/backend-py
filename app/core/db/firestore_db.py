@@ -114,6 +114,19 @@ class FirestoreManager:
                 f"Failed to fetch all documents from '{collection_name}': {e}")
             raise
 
+    def read_raw_all_documents(self, collection_name):
+        """Read all documents from a collection."""
+        try:
+            docs = self.db.collection(collection_name).stream()
+            all_docs = [doc for doc in docs]
+            logger.info(
+                f"Fetched all documents from collection '{collection_name}'.")
+            return all_docs
+        except Exception as e:
+            logger.error(
+                f"Failed to fetch all documents from '{collection_name}': {e}")
+            raise
+
     def create_collection(self, collection_name, doc_id=None, data=None):
         """Ensure a collection exists by creating a document in it.
 
