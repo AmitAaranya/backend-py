@@ -47,12 +47,18 @@ class ConnectionManager:
             try:
                 chat_response.append({
                     "id": chat.id,
-                    "userName": chat._data.get("messages")[-1].get("user").get("name"),
+                    "userName": self.get_user_name(chat.id),
                     "lastMessage": chat._data.get("messages")[-1].get("text"),
                 })
             except:
                 pass
         return chat_response
+
+    def get_user_name(self, user_id: str):
+        user = db.read_data(TableConfig.USER.value, user_id)
+        if user:
+            return user.get("name", "User")
+        return "User"
 
 
 # Save message with timestamp
