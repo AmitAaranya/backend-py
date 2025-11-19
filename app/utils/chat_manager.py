@@ -29,7 +29,7 @@ class ConnectionManager:
                         del self.active_chats[doc_id]
                     return
 
-    async def send_json(self, websocket: WebSocket, data: Any):
+    async def send_json_data(self, websocket: WebSocket, data: Any):
         await websocket.send_json(data)
 
     async def send_to_role(self, doc_id: str, role: str, message: dict):
@@ -46,7 +46,7 @@ class ConnectionManager:
         for chat in all_chat:
             try:
                 chat_response.append({
-                    "id": chat._data.get("messages")[-1].get("user").get("_id"),
+                    "id": chat.id,
                     "userName": chat._data.get("messages")[-1].get("user").get("name"),
                     "lastMessage": chat._data.get("messages")[-1].get("text"),
                 })
