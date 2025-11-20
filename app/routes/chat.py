@@ -12,9 +12,14 @@ manager = ConnectionManager()
 # WebSocket endpoint
 
 
-@chat_rt.get("/list", status_code=200)
+@chat_rt.get("/agent/history", status_code=200)
 def list_all_chat_agent(user_id=Depends(get_user_id)):
     return manager.list_all_chat_agent()
+
+
+@chat_rt.get("/user/history", status_code=200)
+def list_all_chat_user(user_id=Depends(get_user_id)):
+    return manager.user_chat_history(user_id)
 
 
 @chat_rt.websocket("/ws/{user_id}/{agent_id}/{role}")
