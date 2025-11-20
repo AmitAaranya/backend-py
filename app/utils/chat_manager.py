@@ -3,6 +3,7 @@ from fastapi import WebSocket
 
 from app.model import TableConfig
 from app.core import db
+from app.settings import logger
 
 # Connection manager for private chats
 
@@ -39,6 +40,18 @@ class ConnectionManager:
     async def send_chat_history(self, doc_id: str):
         return db.read_data(TableConfig.CHAT.value, doc_id)
 
+    def user_chat_history(self, user_id: str):
+        his = db.read_data(TableConfig.CHAT.value, user_id)
+        if not his:
+            logger.debug("No chat history found for user: ", user_id)
+            return []
+        return {
+            "id": user_id,
+            "userName": "Assistant",
+            "lastMessage": his.get("messages")[-1].get("text"),
+            "all": his.get("messages")
+        }
+
     def list_all_chat_agent(self):
         all_chat = db.read_raw_all_documents(TableConfig.CHAT.value)
 
@@ -49,6 +62,7 @@ class ConnectionManager:
                     "id": chat.id,
                     "userName": self.get_user_name(chat.id),
                     "lastMessage": chat._data.get("messages")[-1].get("text"),
+                    "all": chat._data.get("messages")
                 })
             except:
                 pass
