@@ -37,7 +37,7 @@ def verify_jwt_token(token, secret_key):
 
 
 def get_user_id(authorization: str = Header(...),
-                token_source: str = Header(..., alias="X-Token-Source")):
+                token_source: str = Header("password", alias="X-Token-Source")):
     """Extract and validate JWT from Authorization header."""
     if not authorization.startswith("Bearer "):
         raise HTTPException(

@@ -7,7 +7,7 @@ from app.model import SellItem, SellItemResponse, TableConfig, AgentResponse
 from app.settings import ENV
 from app.core import db, docs, storage
 from app.utils.helper import extract_google_docs_id
-from app.utils.image import thumbnail
+from app.utils.image import save_to_png
 from app.utils.security import get_user_id, hash_password, verify_password
 
 
@@ -93,7 +93,7 @@ async def add_selling_item(
         raise HTTPException(status_code=400, detail="Uploaded image is empty")
 
     id = str(uuid.uuid4())
-    thumbnail_image_bytes = thumbnail(image_bytes)
+    thumbnail_image_bytes = save_to_png(image_bytes)
 
     blob_name = f"sell_item/{id}/thumbnail.png"
     storage.upload_bytes(
