@@ -3,7 +3,7 @@ from PIL import Image
 from fastapi import HTTPException
 
 
-def thumbnail(image_bytes):
+def save_to_png(image_bytes, max_size=(500, 500), thumbnail=True):
     # Open image with Pillow
     try:
         with Image.open(io.BytesIO(image_bytes)) as img:
@@ -12,8 +12,8 @@ def thumbnail(image_bytes):
                 img = img.convert("RGB")
 
             # Resize or compress for profile picture (optional, e.g., max 500x500)
-            max_size = (500, 500)
-            img.thumbnail(max_size)
+            if thumbnail:
+                img.thumbnail(max_size)
 
             # Save as PNG to bytes
             output_bytes_io = io.BytesIO()

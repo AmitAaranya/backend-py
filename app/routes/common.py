@@ -7,7 +7,7 @@ from fastapi.responses import PlainTextResponse, StreamingResponse
 from app.settings import ENV, TITLE, VERSION
 from app.core import storage, firebase
 from app.utils.security import get_user_id
-from app.utils.image import thumbnail
+from app.utils.image import save_to_png
 
 
 common_rt = APIRouter(prefix="", tags=["common"])
@@ -46,7 +46,7 @@ async def upload_profile_image(
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Uploaded image is empty")
 
-    thumbnail_image_bytes = thumbnail(image_bytes)
+    thumbnail_image_bytes = save_to_png(image_bytes)
 
     blob_name = f"profile/{role}/{user_id}.png"
     try:
