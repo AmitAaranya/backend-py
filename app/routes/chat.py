@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 from app.core import storage
 from app.utils.chat_manager import ConnectionManager, save_message
 from app.settings import ENV, logger
-from app.utils.image import save_to_png
+from app.utils.image import compress_image
 from app.utils.security import get_user_id
 
 
@@ -26,10 +26,10 @@ def list_all_chat_user(user_id=Depends(get_user_id)):
     return manager.user_chat_history(user_id)
 
 
-@chat_rt.get("/image/{user_id}/{id}", status_code=200)
-def send_chat_image_frontend(user_id: str, id: str):
+@chat_rt.get("/image/{user_id}/{id}/{image_name}", status_code=200)
+def send_chat_image_frontend(user_id: str, id: str, image_name: str):
 
-    blob_name = f"chat/{user_id}/{id}.png"
+    blob_name = f"chat/{user_id}/{id}/{image_name}"
 
     try:
         # Assuming storage has a method to get the image bytes
@@ -55,7 +55,7 @@ def send_chat_image_frontend(user_id: str, id: str):
 @chat_rt.post("/image/{user_id}/{id}", status_code=200)
 async def save_chat_image_(user_id: str, id: str, image: UploadFile = File(...), user=Depends(get_user_id)):
 
-    blob_name = f"chat/{user_id}/{id}.png"
+    blob_name = f"chat/{user_id}/{id}/{str(image.filename)}"
 
     if not image:
         raise HTTPException(status_code=400, detail="No image file provided")
@@ -69,11 +69,11 @@ async def save_chat_image_(user_id: str, id: str, image: UploadFile = File(...),
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Uploaded image is empty")
 
-    save_image_bytes = save_to_png(image_bytes, thumbnail=False)
+    compress_image_bytes = compress_image(image_bytes)
 
     try:
         public_url = storage.upload_bytes(
-            image_bytes=save_image_bytes,
+            image_bytes=compress_image_bytes,
             bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
             blob_name=blob_name,
             content_type="image/png",
