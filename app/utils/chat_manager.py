@@ -34,8 +34,16 @@ class ConnectionManager:
         await websocket.send_json(data)
 
     async def send_to_role(self, doc_id: str, role: str, message: dict):
-        if doc_id in self.active_chats and role in self.active_chats[doc_id]:
-            await self.active_chats[doc_id][role].send_json(message)
+        chat = self.active_chats.get(doc_id)
+        if not chat:
+            return False
+
+        websocket = chat.get(role)
+        if websocket:
+            await websocket.send_json(message)
+            return True
+
+        return False
 
     async def send_chat_history(self, doc_id: str):
         return db.read_data(TableConfig.CHAT.value, doc_id)
