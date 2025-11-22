@@ -72,6 +72,7 @@ def list_followers(agent_mobile: str):
 async def add_selling_item(
         url: Optional[str] = Form(""),
         name: str = Form(...),
+        crops: str = Form(...),
         content: Literal["PDF", "DOCS"] = Form(...),
         desc: Optional[str] = Form(None),
         desc_hn: Optional[str] = Form(None),
@@ -124,7 +125,7 @@ async def add_selling_item(
         if not docs_id:
             raise HTTPException(400, "Please provide correct Google docs URL")
 
-    item = SellItem(id=id, docs_id=docs_id, name=name, content=content,
+    item = SellItem(id=id, docs_id=docs_id, name=name, crops=crops, content=content,
                     desc=desc, desc_hn=desc_hn, price=price, filename=filename)
 
     db.add_data(TableConfig.SELL_ITEM.name, id, item.model_dump())
