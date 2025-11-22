@@ -1,4 +1,6 @@
+import asyncio
 import io
+import json
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from app.core import storage
@@ -6,7 +8,7 @@ from app.utils.chat_manager import ConnectionManager, save_message
 from app.settings import ENV, logger
 from app.utils.image import compress_image
 from app.utils.security import get_user_id
-
+from app.core import redis
 
 chat_rt = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -93,17 +95,63 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
         return
 
     doc_id = f"{user_id}"
+    sender_id = user_id if role == "user" else agent_id
+
+    socket_id = redis.generate_socket_id()
+
+    # 1) Register connection in Upstash
+    await redis.add_connected_user(sender_id, socket_id)
+
+    # 2) Register local WebSocket in this instance
     await manager.connect(websocket, doc_id, role)
+    logger.info(f"{role} connected on instance with socket {socket_id}")
+
+    # 3) Start Pub/Sub listener for this websocket
+    asyncio.create_task(redis_subscriber(
+        ENV.REDIS_CHANNEL_CHAT, doc_id))
 
     try:
         while True:
             message = await websocket.receive_json()
 
-            # Save to Firestore
+            # Save message (firestore or db)
             save_message(doc_id, message)
-            # Send to the other participant
-            other_role = "agent" if role == "user" else "user"
-            await manager.send_to_role(doc_id, other_role, message)
+
+            message["from_role"] = role
+            message["doc_id"] = doc_id
+
+            # 3) Try local delivery
+            receiver = "agent" if role == "user" else "user"
+            delivered_locally = await manager.send_to_role(doc_id, receiver, message)
+
+            if not delivered_locally:
+                # 4) Receiver is not on this instance → publish globally
+                await redis.publish(ENV.REDIS_CHANNEL_CHAT, json.dumps(message))
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        logger.debug(f"{role} ({doc_id}) disconnected")
+        await redis.remove_connected_user(user_id, socket_id)
+        logger.info(f"{role} disconnected {socket_id}")
+
+
+async def redis_subscriber(channel: str, doc_id: str):
+    await redis.subscribe(channel)
+
+    async for msg in redis.listen():
+        if msg["type"] != "message":
+            continue
+
+        try:
+            data = json.loads(msg["data"])
+        except Exception:
+            continue
+
+        # Only messages for this conversation
+        if data.get("doc_id") != doc_id:
+            continue
+
+        sender = data.get("from_role")
+        receiver = "agent" if sender == "user" else "user"
+
+        # Deliver locally (if that role is connected on this instance)
+        await manager.send_to_role(doc_id, receiver, data)
