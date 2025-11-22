@@ -112,8 +112,14 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
 
     try:
         while True:
-            message = await websocket.receive_json()
+            payload = await websocket.receive_json()
 
+            if payload.get("type") != "chat":
+                continue
+
+            message = payload.get("message")
+            if not message:
+                continue
             # Save message (firestore or db)
             save_message(doc_id, message)
 
