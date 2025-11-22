@@ -114,6 +114,7 @@ class SellItem(BaseModel):
     id: str = Field(..., description="Unique identifier")
     docs_id: str = Field(..., description="Extracted from docs URL")
     name: str
+    crops: str
     content: Literal["PDF", "DOCS"]
     desc: Optional[str]
     desc_hn: Optional[str]
@@ -124,6 +125,7 @@ class SellItem(BaseModel):
 class SellItemResponse(BaseModel):
     id: str = Field(..., description="Unique identifier")
     name: str
+    crops: str
     content: Literal["PDF", "DOCS"]
     desc: str
     desc_hn: str
