@@ -132,8 +132,21 @@ class SellItemResponse(BaseModel):
     price: float
 
 
+class CreateOrder(BaseModel):
+    amount_rupees: int      # in rupees
+    currency: str = "INR"
+    receipt: str
+
+
+class VerifyPayment(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+
 class TableConfig(Enum):
     USER = "User"
     AGENT = "AgentUser"
     CHAT = "ChatHistory"
     SELL_ITEM = "SellItem"
+    SUBSCRIPTION = "Subscription"
