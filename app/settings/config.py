@@ -19,4 +19,7 @@ class EnvInit:
     REDIS_RESP_PASSWORD = os.environ["REDIS_RESP_PASSWORD"]
     REDIS_CHANNEL_CHAT = "chatMessage"
 
+    RAZORPAY_KEY_ID = os.environ["RAZORPAY_KEY_ID"]
+    RAZORPAY_KEY_SECRET = os.environ["RAZORPAY_KEY_SECRET"]
+
     ...

@@ -21,5 +21,7 @@ def initialize_application():
     app.include_router(user_rt)
     app.include_router(agent_rt)
     app.include_router(chat_rt)
+    app.include_router(subs_rt)
+    app.include_router(rpay_rt)
 
     return app
