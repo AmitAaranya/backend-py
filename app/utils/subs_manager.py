@@ -20,6 +20,7 @@ class SubscriptionDuration(int, Enum):
     DAYS_30 = 30
     DAYS_180 = 180
     DAYS_365 = 365
+    DAYS_UNLIMITED = -1
 
 
 class Subscription(BaseModel):
@@ -29,14 +30,15 @@ class Subscription(BaseModel):
     start_date: datetime
     duration_days: SubscriptionDuration
     price: float
-    status: SubscriptionStatus = SubscriptionStatus.active
+    order_id: str
 
 
 class SubscriptionCreate(BaseModel):
     course_id: str
-    duration_days: SubscriptionDuration
-    price: float
+    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
+    order_id: str
 
 
 class SubscriptionStatusResponse(BaseModel):
+    course_id: Optional[str] = None
     status: SubscriptionStatus

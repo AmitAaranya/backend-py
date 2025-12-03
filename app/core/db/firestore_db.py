@@ -31,7 +31,7 @@ class FirestoreManager:
             logger.error(f"Failed to add data to Firestore: {e}")
             raise
 
-    def get_user_ref(self, collection_name, doc_id):
+    def get_doc_ref(self, collection_name, doc_id):
         """Get a reference to a Firestore document."""
         return self.db.collection(collection_name).document(doc_id)
 
