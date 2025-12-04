@@ -31,6 +31,7 @@ class Subscription(BaseModel):
     duration_days: SubscriptionDuration
     price: float
     order_id: str
+    expiry_date: Optional[datetime]
 
 
 class SubscriptionCreate(BaseModel):
@@ -42,3 +43,12 @@ class SubscriptionCreate(BaseModel):
 class SubscriptionStatusResponse(BaseModel):
     course_id: Optional[str] = None
     status: SubscriptionStatus
+
+
+class SellItemSubscriptionResponse(BaseModel):
+    id: str
+    name: str
+    crops: str
+    desc: str
+    desc_hn: str
+    expiry_date: Optional[datetime]

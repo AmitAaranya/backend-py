@@ -27,9 +27,17 @@ class FirestoreManager:
             doc_ref.set(data)
             logger.info(
                 f"Document '{doc_id}' added/updated in collection '{collection_name}'.")
+            return doc_ref
         except Exception as e:
             logger.error(f"Failed to add data to Firestore: {e}")
             raise
+
+    def get_document_ref(self, document_path):
+        try:
+            doc_ref = self.db.document(document_path)
+            return doc_ref
+        except Exception as e:
+            raise Exception(f"Failed to get document reference: {e}")
 
     def get_doc_ref(self, collection_name, doc_id):
         """Get a reference to a Firestore document."""

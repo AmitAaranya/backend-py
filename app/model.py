@@ -155,5 +155,5 @@ class TableConfig(Enum):
     USER = "User"
     AGENT = "AgentUser"
     CHAT = "ChatHistory"
-    SELL_ITEM = "SellItem"
+    SELL_ITEM = "SELL_ITEM"
     SUBSCRIPTION = "Subscription"
