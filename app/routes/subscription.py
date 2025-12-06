@@ -4,7 +4,7 @@ from app.utils.security import get_user_id
 from app.core import db
 from app.utils.subs_manager import SellItemSubscriptionResponse, Subscription, SubscriptionCreate, SubscriptionDuration, SubscriptionStatus, SubscriptionStatusResponse
 from app.utils.razorpay_client import razorpay_client
-from app.model import TableConfig, SellItem
+from app.model import SellItemUserResponse, TableConfig
 from app.settings import logger
 
 
@@ -103,3 +103,17 @@ def get_active_subscriptions(user_id: str = Depends(get_user_id)):
                     **course, expiry_date=subs.get("expiry_date", None))
             )
     return course_details
+
+
+@subs_rt.get("/sell/item", response_model=list[SellItemUserResponse])
+async def fetch_doc(user_id: str = Depends(get_user_id)):
+    items = db.read_all_documents(TableConfig.SELL_ITEM.name)
+    user_ = db.read_data(TableConfig.USER.value,  user_id)
+    if not user_:
+        raise HTTPException(status_code=404, detail="User not found")
+    active_courses = user_.get("subscriptions", {}).keys()
+    for item in items:
+        if item["id"] in active_courses:
+            item["active"] = True
+
+    return [SellItemUserResponse(**item) for item in items]

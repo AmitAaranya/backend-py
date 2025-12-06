@@ -132,6 +132,10 @@ class SellItemResponse(BaseModel):
     price: float
 
 
+class SellItemUserResponse(SellItemResponse):
+    active: bool = False
+
+
 class CreateOrder(BaseModel):
     amount_rupees_paisa: int      # in rupees
     currency: str = "INR"
