@@ -2,8 +2,8 @@ import io
 from typing import Literal, Optional
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import HTMLResponse, StreamingResponse
-from app.model import SellItem, SellItemResponse, TableConfig, AgentResponse
+from fastapi.responses import StreamingResponse
+from app.model import SellItem, SellItemResponse, SellItemUpdate, TableConfig, AgentResponse
 from app.settings import ENV
 from app.core import db, docs, storage
 from app.utils.helper import extract_google_docs_id
@@ -130,6 +130,22 @@ async def add_selling_item(
 
     db.add_data(TableConfig.SELL_ITEM.name, id, item.model_dump())
     return {"message": "Item added successfully"}
+
+
+@agent_rt.put("/sell/item/{id}", status_code=status.HTTP_200_OK)
+def update_selling_item(id: str, data: SellItemUpdate):
+    """
+    Update a selling item's details.
+    """
+    item_ref = db.get_doc_ref(TableConfig.SELL_ITEM.name, id)
+    item = item_ref.get().to_dict()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    update_data = data.model_dump(exclude_none=True)
+    item_ref.update(update_data)
+
+    return {"message": "Item updated successfully"}
 
 
 @agent_rt.get("/sell/item")

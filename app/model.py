@@ -136,6 +136,13 @@ class SellItemUserResponse(SellItemResponse):
     active: bool = False
 
 
+class SellItemUpdate(BaseModel):
+    name: Optional[str] = None
+    price: Optional[float] = None
+    desc: Optional[str] = None
+    desc_hn: Optional[str] = None
+
+
 class CreateOrder(BaseModel):
     amount_rupees_paisa: int      # in rupees
     currency: str = "INR"
