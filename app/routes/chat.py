@@ -135,13 +135,14 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
             # if payload.get("type") != "chat":
             #     continue
             message = payload.get("message")
-            logger.debug(f"Message received: {message}")
+            # logger.debug(f"Message received: {message}")
 
             if not message:
                 continue
 
             if message.get("type") == "call-request":
-                call_details = payload.get("data")
+                call_details = message.get("data")
+                logger.debug(f"Call request received: {call_details}")
                 call.initiate_call_request(**call_details)
             # Save message (firestore or db)
             save_message(doc_id, message)
