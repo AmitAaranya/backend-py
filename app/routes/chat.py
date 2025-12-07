@@ -132,8 +132,8 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
             payload = await websocket.receive_json()
             logger.debug(f"Payload received: {payload}")
 
-            # if payload.get("type") != "chat":
-            #     continue
+            if payload.get("type") != "chat":
+                continue
             message = payload.get("message")
             # logger.debug(f"Message received: {message}")
 
