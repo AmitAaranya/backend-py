@@ -9,11 +9,13 @@ from app.settings import ENV, logger
 from app.utils.image import compress_image
 from app.utils.security import get_user_id
 from app.core import redis
+from app.utils.call_manager import CallManager, CallRequestModel
 
 chat_rt = APIRouter(prefix="/chat", tags=["chat"])
 
 
 manager = ConnectionManager()
+call = CallManager()
 
 # WebSocket endpoint
 
@@ -88,6 +90,21 @@ async def save_chat_image_(user_id: str, id: str, image: UploadFile = File(...),
         )
 
 
+@chat_rt.get("/request", status_code=200, response_model=list[CallRequestModel])
+def get_all_request():
+    return call.get_all_call_requests()
+
+
+@chat_rt.get("/{id}", status_code=200, response_model=CallRequestModel)
+def get_request(id: str):
+    return call.get_call_request(id)
+
+
+@chat_rt.put("/fulfilled/{id}", status_code=200)
+def fulfilled_request(id: str, remarks: str = ""):
+    return call.fulfilled_call_request(id, remarks)
+
+
 @chat_rt.websocket("/ws/{user_id}/{agent_id}/{role}")
 async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
     if role not in ["user", "agent"]:
@@ -113,13 +130,19 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
     try:
         while True:
             payload = await websocket.receive_json()
+            logger.debug(f"Payload received: {payload}")
 
-            if payload.get("type") != "chat":
-                continue
-
+            # if payload.get("type") != "chat":
+            #     continue
             message = payload.get("message")
+            logger.debug(f"Message received: {message}")
+
             if not message:
                 continue
+
+            if message.get("type") == "call-request":
+                call_details = payload.get("data")
+                call.initiate_call_request(**call_details)
             # Save message (firestore or db)
             save_message(doc_id, message)
 

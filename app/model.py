@@ -168,3 +168,4 @@ class TableConfig(Enum):
     CHAT = "ChatHistory"
     SELL_ITEM = "SELL_ITEM"
     SUBSCRIPTION = "Subscription"
+    CALL_REQUEST = "CallRequest"
