@@ -30,7 +30,7 @@ class CallManager:
     def __init__(self):
         ...
 
-    def initiate_call_request(self, id: str, user_id: str, user_name: str, paid: bool,  message: str, request_time: str, agent_id: Optional[str] = None):
+    def initiate_call_request(self, id: str, user_id: str, user_name: str, paid: bool,  message: str, request_time: str, agent_id: Optional[str] = None, *args, **kwargs):
         try:
             data = CallRequestModel(id=id, user_id=user_id, user_name=user_name, paid=paid,
                                     agent_id=agent_id, message=message, request_time=request_time,
