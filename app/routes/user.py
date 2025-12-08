@@ -59,6 +59,19 @@ def fetch_user(user_id=Depends(get_user_id),
 
     return UserResponse(**user, role=role)
 
+@user_rt.get("/fetch/mb", status_code=status.HTTP_200_OK, response_model=UserResponse)
+def fetch_user(mobile_number):
+    # Fetch user data by mobile number
+    if len(mobile_number) <10:
+        raise HTTPException(status_code=401, detail=f"Invalid input mobile number {mobile_number}")
+    
+    mobile_number = f"+91{mobile_number.strip()[-10:]}"
+    user = db.read_data_by_mobile(TableConfig.USER.value, mobile_number)
+    if not user:
+        raise HTTPException(status_code=401, detail=f"No User found for number {mobile_number}")
+
+    return UserResponse(**user)
+
 
 @user_rt.post("/ph/create", status_code=status.HTTP_200_OK, response_model=UserResponse)
 def create_user_mobile_login(

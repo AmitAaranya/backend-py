@@ -11,8 +11,7 @@ from app.settings import logger
 subs_rt = APIRouter(prefix="/subscription", tags=["subscription"])
 
 
-@subs_rt.post("/create")
-def create_subscription(data: SubscriptionCreate, user_id=Depends(get_user_id)):
+def create_subscription(data: SubscriptionCreate, user_id):
     # Create subscription ID based on timestamp
     subscription_id = f"sub_{int(datetime.now().timestamp())}"
     item = db.read_data(
@@ -22,7 +21,6 @@ def create_subscription(data: SubscriptionCreate, user_id=Depends(get_user_id)):
 
     order_details = razorpay_client.get_order_details(data.order_id)
     price_paid = int(order_details.get("amount_paid", 0))
-    price_paid = 100
     expiry_date = datetime.now() + timedelta(days=data.duration_days if data.duration_days !=
                                              SubscriptionDuration.DAYS_UNLIMITED else 3650)
 
@@ -69,6 +67,16 @@ def create_subscription(data: SubscriptionCreate, user_id=Depends(get_user_id)):
 
     logger.debug("Subscription created successfully")
     return subscription.course_id
+
+
+@subs_rt.post("/create")
+def create_subscription_user(data: SubscriptionCreate, user_id=Depends(get_user_id)):
+    return create_subscription(data, user_id)
+
+
+@subs_rt.post("/offline/create")
+def create_offline_subscription(data: SubscriptionCreate, user_id: str):
+    return create_subscription(data, user_id)
 
 
 @subs_rt.get("/status/{course_id}", response_model=SubscriptionStatusResponse)
