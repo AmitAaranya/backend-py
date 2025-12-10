@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timedelta
 from app.utils.security import get_user_id
 from app.core import db
-from app.utils.subs_manager import SellItemSubscriptionResponse, Subscription, SubscriptionCreate, SubscriptionDuration, SubscriptionStatus, SubscriptionStatusResponse
+from app.utils.subs_manager import SellItemSubscriptionResponse, Subscription, SubscriptionCreate, SubscriptionDuration, SubscriptionOfflineCreate, SubscriptionStatus, SubscriptionStatusResponse
 from app.utils.razorpay_client import razorpay_client
-from app.model import SellItemUserResponse, TableConfig
+from app.model import SellItemUserResponse, TableConfig, UserResponse
 from app.settings import logger
 
 
 subs_rt = APIRouter(prefix="/subscription", tags=["subscription"])
 
 
-def create_subscription(data: SubscriptionCreate, user_id):
+def create_subscription(data: SubscriptionCreate, user_id, price_paid):
     # Create subscription ID based on timestamp
     subscription_id = f"sub_{int(datetime.now().timestamp())}"
     item = db.read_data(
@@ -19,8 +19,6 @@ def create_subscription(data: SubscriptionCreate, user_id):
     if not item:
         raise HTTPException(404, "Course ID not found")
 
-    order_details = razorpay_client.get_order_details(data.order_id)
-    price_paid = int(order_details.get("amount_paid", 0))
     expiry_date = datetime.now() + timedelta(days=data.duration_days if data.duration_days !=
                                              SubscriptionDuration.DAYS_UNLIMITED else 3650)
 
@@ -71,12 +69,14 @@ def create_subscription(data: SubscriptionCreate, user_id):
 
 @subs_rt.post("/create")
 def create_subscription_user(data: SubscriptionCreate, user_id=Depends(get_user_id)):
-    return create_subscription(data, user_id)
+    order_details = razorpay_client.get_order_details(data.order_id)
+    price_paid = int(order_details.get("amount_paid", 0))
+    return create_subscription(data, user_id, price_paid)
 
 
 @subs_rt.post("/offline/create")
-def create_offline_subscription(data: SubscriptionCreate, user_id: str):
-    return create_subscription(data, user_id)
+def create_offline_subscription(data: SubscriptionOfflineCreate, user_id: str):
+    return create_subscription(data, user_id, price_paid=data.price_paid)
 
 
 @subs_rt.get("/status/{course_id}", response_model=SubscriptionStatusResponse)
@@ -125,3 +125,17 @@ async def fetch_doc(user_id: str = Depends(get_user_id)):
             item["active"] = True
 
     return [SellItemUserResponse(**item) for item in items]
+
+
+@subs_rt.get("/course/{course_id}", response_model=list[UserResponse])
+async def get_all_user_courses(course_id: str):
+    courses = db.read_data_by_key_equal(TableConfig.SUBSCRIPTION.value, "course_id", course_id)
+    if not courses:
+        raise HTTPException(status_code=404, detail="Course not found")
+    
+    user_res = []
+    for course in courses:
+        user = db.read_data(TableConfig.USER.value, course["user_id"])
+        user_res.append(UserResponse(**user))
+        
+    return user_res

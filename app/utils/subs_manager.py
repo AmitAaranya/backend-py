@@ -39,6 +39,12 @@ class SubscriptionCreate(BaseModel):
     duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
     order_id: str
 
+class SubscriptionOfflineCreate(BaseModel):
+    course_id: str
+    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
+    order_id: str
+    price_paid: float
+
 
 class SubscriptionStatusResponse(BaseModel):
     course_id: Optional[str] = None
