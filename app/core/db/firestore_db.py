@@ -81,6 +81,27 @@ class FirestoreManager:
                 f"Failed to read data by mobile number from Firestore: {e}")
             raise
 
+    def read_data_by_key_equal(self, collection_name, key_name, key_value):
+        """Read a document from Firestore by mobile number."""
+        try:
+            query = self.db.collection(collection_name).where(
+                key_name, "==", key_value)
+            results = query.stream()
+            documents = [doc.to_dict() for doc in results]
+
+            if documents:
+                logger.debug(
+                    f"Document with {key_name} '{key_value}' fetched successfully from '{collection_name}'.")
+                return documents # Return the single matching document
+            else:
+                logger.debug(
+                    f"No document found with {key_name} '{key_value}' in '{collection_name}'.")
+                return None
+        except Exception as e:
+            logger.error(
+                f"Failed to read data by mobile number from Firestore: {e}")
+            raise
+
     def delete_data(self, collection_name, doc_id):
         """Delete a document from Firestore."""
         try:
