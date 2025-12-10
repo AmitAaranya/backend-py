@@ -18,6 +18,7 @@ class CallRequestModel(BaseModel):
     paid: bool
     user_id: str
     user_name: str
+    user_mobile: str
     agent_id: Optional[str] = None
     message: str
     request_time: str
@@ -32,8 +33,10 @@ class CallManager:
 
     def initiate_call_request(self, id: str, user_id: str, user_name: str, paid: bool,  message: str, request_time: str, agent_id: Optional[str] = None, *args, **kwargs):
         try:
-            data = CallRequestModel(id=id, user_id=user_id, user_name=user_name, paid=paid,
-                                    agent_id=agent_id, message=message, request_time=request_time,
+            user = db.read_data(TableConfig.USER.value, user_id)
+
+            data = CallRequestModel(id=id, user_id=user_id, user_name=user_name,user_mobile=user.get("mobile_number"), 
+                                    paid=paid, agent_id=agent_id, message=message, request_time=request_time,
                                     status=CallStatus.requested)
 
             db.add_data(TableConfig.CALL_REQUEST.value,
