@@ -1,12 +1,12 @@
 import uuid
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Header, status, UploadFile, File
-
 from app.model import AuthRequest, CreateUserRequest, PhoneUserCreateRequest, User, TableConfig, UserPsAuthResponse, UserResponse
 from app.settings import ENV
 from app.core import db
 from app.core import storage
 from app.utils.security import get_user_id, hash_password, verify_password
+from app.utils.twilio_client import twilio_client
 
 user_rt = APIRouter(prefix="/user", tags=["user"])
 
@@ -32,6 +32,35 @@ def create_user(payload: CreateUserRequest, role: str = Header("user", alias="X-
 
     return {"message": "user created"}
 
+
+@user_rt.post("/otp/send", status_code=status.HTTP_200_OK)
+def send_otp(mobile_number: str):
+    mobile_number = f"+91{mobile_number.strip()[-10:]}"
+    twilio_client.send_otp(mobile_number)
+    return {"message": "OTP sent successfully"}
+
+
+@user_rt.post("/otp/verify")
+def verify_otp(mobile_number: str, otp: str, role: str = Header("user", alias="X-Role")):
+    table_name = TableConfig[role.upper()].value
+    mobile_number = f"+91{mobile_number.strip()[-10:]}"
+
+    if not twilio_client.verify_otp(mobile_number, otp):
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    user = db.read_data_by_mobile(table_name, mobile_number)
+    is_new_user = not bool(user)
+    if is_new_user:
+        id = str(uuid.uuid4())
+        user = {
+            "id": id,
+            "mobile_number": mobile_number}
+
+    # Create JWT token
+    token_data = UserPsAuthResponse(**user).model_dump()
+    token = jwt.encode(token_data, ENV.SECRET_KEY, algorithm="HS256")
+
+    return {"isNew": is_new_user, "message": "user authenticated", "token": token}
 
 @user_rt.post("/pw/auth")
 def authenticate(payload: AuthRequest, role: str = Header("user", alias="X-Role")):
