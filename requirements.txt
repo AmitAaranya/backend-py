@@ -12,3 +12,4 @@ firebase_admin==7.1.0
 redis==7.0.0
 upstash-redis==1.5.0
 razorpay==2.0.0
+twilio==9.8.8

@@ -22,4 +22,8 @@ class EnvInit:
     RAZORPAY_KEY_ID = os.environ["RAZORPAY_KEY_ID"]
     RAZORPAY_KEY_SECRET = os.environ["RAZORPAY_KEY_SECRET"]
 
+    TWILIO_ACCOUNT_SID =  os.environ["TWILIO_ACCOUNT_SID"]
+    TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
+    TWILIO_VERIFY_SERVICE_SID = os.environ["TWILIO_VERIFY_SERVICE_SID"]
+
     ...
