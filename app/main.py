@@ -23,5 +23,6 @@ def initialize_application():
     app.include_router(chat_rt)
     app.include_router(subs_rt)
     app.include_router(rpay_rt)
+    app.include_router(notify_rt)
 
     return app

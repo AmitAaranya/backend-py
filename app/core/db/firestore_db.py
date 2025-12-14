@@ -134,6 +134,13 @@ class FirestoreManager:
             logger.error(f"Failed to update data in Firestore: {e}")
             raise
 
+    def array_union(self, values: list):
+        """Returns a special value that can be used with set(), create() or update()
+        that tells the server to union the given elements with any array value
+        that already exists on the server.
+        """
+        return firestore.ArrayUnion(values)
+
     def read_all_documents(self, collection_name):
         """Read all documents from a collection."""
         try:

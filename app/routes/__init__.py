@@ -5,6 +5,7 @@ from .chat import chat_rt
 from .redis import redis_rt
 from .subscription import subs_rt
 from .razorpay import rpay_rt
+from .notifications import notify_rt
 
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "chat_rt",
     "redis_rt",
     "subs_rt",
-    "rpay_rt"
+    "rpay_rt",
+    "notify_rt"
 ]
