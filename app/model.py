@@ -169,3 +169,5 @@ class TableConfig(Enum):
     SELL_ITEM = "SELL_ITEM"
     SUBSCRIPTION = "Subscription"
     CALL_REQUEST = "CallRequest"
+    DEVICE = "Device"
+

@@ -84,3 +84,10 @@ class UnifiedRedisManager:
     # -----------------------------
     def generate_socket_id(self) -> str:
         return str(uuid.uuid4())
+
+    # -----------------------------
+    # Sets (HTTP)
+    # -----------------------------
+    async def sadd(self, key: str, *values: Any):
+        """Add one or more members to a set."""
+        return await self.http.sadd(key, *values)
