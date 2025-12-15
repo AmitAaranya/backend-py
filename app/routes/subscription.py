@@ -2,9 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timedelta
 from app.utils.security import get_user_id
 from app.core import db
-from app.utils.subs_manager import SellItemSubscriptionResponse, Subscription, SubscriptionCreate, SubscriptionDuration, SubscriptionOfflineCreate, SubscriptionStatus, SubscriptionStatusResponse
+from app.utils.subs_manager import (
+    SellItemSubscriptionResponse,
+    Subscription,
+    SubscriptionCreate,
+    SubscriptionDuration,
+    SubscriptionOfflineCreate,
+    SubscriptionStatus,
+    SubscriptionStatusResponse,
+)
 from app.utils.razorpay_client import razorpay_client
-from app.model import SellItemUserResponse, TableConfig, UserResponse
+from app.model.model import SellItemUserResponse, TableConfig, UserResponse
 from app.settings import logger
 
 
@@ -14,13 +22,17 @@ subs_rt = APIRouter(prefix="/subscription", tags=["subscription"])
 def create_subscription(data: SubscriptionCreate, user_id, price_paid):
     # Create subscription ID based on timestamp
     subscription_id = f"sub_{int(datetime.now().timestamp())}"
-    item = db.read_data(
-        TableConfig.SELL_ITEM.name, data.course_id)
+    item = db.read_data(TableConfig.SELL_ITEM.name, data.course_id)
     if not item:
         raise HTTPException(404, "Course ID not found")
 
-    expiry_date = datetime.now() + timedelta(days=data.duration_days if data.duration_days !=
-                                             SubscriptionDuration.DAYS_UNLIMITED else 3650)
+    expiry_date = datetime.now() + timedelta(
+        days=(
+            data.duration_days
+            if data.duration_days != SubscriptionDuration.DAYS_UNLIMITED
+            else 3650
+        )
+    )
 
     if int(item.get("price", 0)) != price_paid:
         raise HTTPException(400, "Price mismatch")
@@ -33,7 +45,7 @@ def create_subscription(data: SubscriptionCreate, user_id, price_paid):
         duration_days=data.duration_days,
         price=price_paid,
         order_id=data.order_id,
-        expiry_date=expiry_date
+        expiry_date=expiry_date,
     )
     try:
         user_doc_ref = db.get_doc_ref(TableConfig.USER.value, user_id)
@@ -52,16 +64,14 @@ def create_subscription(data: SubscriptionCreate, user_id, price_paid):
         subs_history = {}
 
     if subscription.course_id in subs_history.keys():
-        raise HTTPException(
-            status_code=400, detail="Course already subscribed")
+        raise HTTPException(status_code=400, detail="Course already subscribed")
 
-    subs_ref = db.add_data(TableConfig.SUBSCRIPTION.value,
-                           subscription_id, subscription_dict)
+    subs_ref = db.add_data(
+        TableConfig.SUBSCRIPTION.value, subscription_id, subscription_dict
+    )
     subs_history[subscription.course_id] = subs_ref
 
-    user_doc_ref.set({
-        "subscriptions": subs_history
-    }, merge=True)
+    user_doc_ref.set({"subscriptions": subs_history}, merge=True)
 
     logger.debug("Subscription created successfully")
     return subscription.course_id
@@ -81,18 +91,22 @@ def create_offline_subscription(data: SubscriptionOfflineCreate, user_id: str):
 
 @subs_rt.get("/status/{course_id}", response_model=SubscriptionStatusResponse)
 def get_active_subscriptions_status(course_id, user_id: str = Depends(get_user_id)):
-    user_ = db.read_data(TableConfig.USER.value,  user_id)
+    user_ = db.read_data(TableConfig.USER.value, user_id)
     if not user_:
         return SubscriptionStatusResponse(status=SubscriptionStatus.not_found)
 
     if course_id in user_.get("subscriptions", {}).keys():
-        return SubscriptionStatusResponse(course_id=course_id, status=SubscriptionStatus.active)
-    return SubscriptionStatusResponse(course_id=course_id, status=SubscriptionStatus.expired)
+        return SubscriptionStatusResponse(
+            course_id=course_id, status=SubscriptionStatus.active
+        )
+    return SubscriptionStatusResponse(
+        course_id=course_id, status=SubscriptionStatus.expired
+    )
 
 
 @subs_rt.get("/active", response_model=list[SellItemSubscriptionResponse])
 def get_active_subscriptions(user_id: str = Depends(get_user_id)):
-    user_ = db.read_data(TableConfig.USER.value,  user_id)
+    user_ = db.read_data(TableConfig.USER.value, user_id)
     if not user_:
         raise HTTPException(status_code=404, detail="User not found")
     course_details = []
@@ -108,7 +122,8 @@ def get_active_subscriptions(user_id: str = Depends(get_user_id)):
         if course:
             course_details.append(
                 SellItemSubscriptionResponse(
-                    **course, expiry_date=subs.get("expiry_date", None))
+                    **course, expiry_date=subs.get("expiry_date", None)
+                )
             )
     return course_details
 
@@ -116,7 +131,7 @@ def get_active_subscriptions(user_id: str = Depends(get_user_id)):
 @subs_rt.get("/sell/item", response_model=list[SellItemUserResponse])
 async def fetch_doc(user_id: str = Depends(get_user_id)):
     items = db.read_all_documents(TableConfig.SELL_ITEM.name)
-    user_ = db.read_data(TableConfig.USER.value,  user_id)
+    user_ = db.read_data(TableConfig.USER.value, user_id)
     if not user_:
         raise HTTPException(status_code=404, detail="User not found")
     active_courses = user_.get("subscriptions", {}).keys()
@@ -129,13 +144,15 @@ async def fetch_doc(user_id: str = Depends(get_user_id)):
 
 @subs_rt.get("/course/{course_id}", response_model=list[UserResponse])
 async def get_all_user_courses(course_id: str):
-    courses = db.read_data_by_key_equal(TableConfig.SUBSCRIPTION.value, "course_id", course_id)
+    courses = db.read_data_by_key_equal(
+        TableConfig.SUBSCRIPTION.value, "course_id", course_id
+    )
     if not courses:
         raise HTTPException(status_code=404, detail="Course not found")
-    
+
     user_res = []
     for course in courses:
         user = db.read_data(TableConfig.USER.value, course["user_id"])
         user_res.append(UserResponse(**user))
-        
+
     return user_res

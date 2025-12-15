@@ -20,13 +20,11 @@ def save_to_png(image_bytes, max_size=(500, 500), thumbnail=True):
             img.save(output_bytes_io, format="PNG", optimize=True)
             return output_bytes_io.getvalue()
     except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to process image: {e}"
-        )
+        raise HTTPException(status_code=400, detail=f"Failed to process image: {e}")
 
 
 # Compress the image
-def compress_image(image_bytes: bytes) -> bytes:
+def compress_image(image_bytes: bytes, quality: int = 85) -> bytes:
     """
     Compress image but keep original extension / format.
     """
@@ -47,28 +45,47 @@ def compress_image(image_bytes: bytes) -> bytes:
             output_buffer,
             format="JPEG",
             optimize=True,
-            quality=85,   # good compression, adjust if needed
+            quality=quality,  # good compression, adjust if needed
         )
 
     elif original_format == "PNG":
         # PNG lossless compression
-        image.save(
-            output_buffer,
-            format="PNG",
-            optimize=True
-        )
+        image.save(output_buffer, format="PNG", optimize=True)
 
     elif original_format == "WEBP":
         # Keep webp, use near-lossless high quality
         image.save(
-            output_buffer,
-            format="WEBP",
-            quality=90,   # WhatsApp-like
-            method=6
+            output_buffer, format="WEBP", quality=quality, method=6  # WhatsApp-like
         )
 
     else:
         # Fallback: save without conversion
         image.save(output_buffer, format=original_format)
+
+    return output_buffer.getvalue()
+
+
+def create_thumbnail_bytes(image_bytes: bytes, size=(200, 200), quality=85) -> bytes:
+    """
+    Create a thumbnail and return it as bytes.
+
+    :param image: PIL Image object
+    :param size: Thumbnail size (width, height)
+    :param quality: JPEG quality
+    :return: Image bytes
+    """
+
+    img = Image.open(io.BytesIO(image_bytes))
+
+    # Convert unsupported modes
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+
+    # Resize while preserving aspect ratio
+    img.thumbnail(size, Image.Resampling.LANCZOS)
+
+    output_buffer = io.BytesIO()
+
+    img.save(output_buffer, format="JPEG", quality=quality, optimize=True)
 
     return output_buffer.getvalue()
