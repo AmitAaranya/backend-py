@@ -1,13 +1,22 @@
 import asyncio
 import io
 import json
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import StreamingResponse
 from app.core import storage
 from app.utils.chat_manager import ConnectionManager, save_message
 from app.settings import ENV, logger
 from app.utils.image import compress_image
 from app.utils.security import get_user_id
+from app.utils.notifications import notifier
 from app.core import redis
 from app.utils.call_manager import CallManager, CallRequestModel
 
@@ -38,26 +47,23 @@ def send_chat_image_frontend(user_id: str, id: str, image_name: str):
     try:
         # Assuming storage has a method to get the image bytes
         image_bytes = storage.get_bytes(
-            bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
-            blob_name=blob_name
+            bucket_name=ENV.GOOGLE_STORAGE_BUCKET, blob_name=blob_name
         )
 
         if not image_bytes:
-            raise HTTPException(
-                status_code=404, detail="image not found"
-            )
+            raise HTTPException(status_code=404, detail="image not found")
 
         # Return image bytes as StreamingResponse
         return StreamingResponse(io.BytesIO(image_bytes), media_type="image/png")
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to retrieve image: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve image: {e}")
 
 
 @chat_rt.post("/image/{user_id}/{id}", status_code=200)
-async def save_chat_image_(user_id: str, id: str, image: UploadFile = File(...), user=Depends(get_user_id)):
+async def save_chat_image_(
+    user_id: str, id: str, image: UploadFile = File(...), user=Depends(get_user_id)
+):
 
     blob_name = f"chat/{user_id}/{id}/{str(image.filename)}"
 
@@ -85,9 +91,7 @@ async def save_chat_image_(user_id: str, id: str, image: UploadFile = File(...),
         if public_url:
             return {"message": "image uploaded"}
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to upload image: {e}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {e}")
 
 
 @chat_rt.get("/request", status_code=200, response_model=list[CallRequestModel])
@@ -124,8 +128,7 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
     logger.info(f"{role} connected on instance with socket {socket_id}")
 
     # 3) Start Pub/Sub listener for this websocket
-    asyncio.create_task(redis_subscriber(
-        ENV.REDIS_CHANNEL_CHAT, doc_id))
+    asyncio.create_task(redis_subscriber(ENV.REDIS_CHANNEL_CHAT, doc_id))
 
     try:
         while True:
@@ -146,6 +149,7 @@ async def chat(websocket: WebSocket, user_id: str, agent_id: str, role: str):
                 call.initiate_call_request(**call_details)
             # Save message (firestore or db)
             save_message(doc_id, message)
+            asyncio.create_task(notifier.chat(user_id, role, agent_id, message))
 
             message["from_role"] = role
             message["doc_id"] = doc_id

@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from fastapi import WebSocket
 
-from app.model import TableConfig
+from app.model.model import TableConfig
 from app.core import db
 from app.settings import logger
 
@@ -57,7 +57,7 @@ class ConnectionManager:
             "id": user_id,
             "userName": "Assistant",
             "lastMessage": his.get("messages")[-1].get("text"),
-            "all": his.get("messages")
+            "all": his.get("messages"),
         }
 
     def list_all_chat_agent(self):
@@ -66,12 +66,14 @@ class ConnectionManager:
         chat_response = []
         for chat in all_chat:
             try:
-                chat_response.append({
-                    "id": chat.id,
-                    "userName": self.get_user_name(chat.id),
-                    "lastMessage": chat._data.get("messages")[-1].get("text"),
-                    "all": chat._data.get("messages")
-                })
+                chat_response.append(
+                    {
+                        "id": chat.id,
+                        "userName": self.get_user_name(chat.id),
+                        "lastMessage": chat._data.get("messages")[-1].get("text"),
+                        "all": chat._data.get("messages"),
+                    }
+                )
             except:
                 pass
         return chat_response

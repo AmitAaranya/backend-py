@@ -5,10 +5,7 @@ from app.routes import *
 
 
 def initialize_application():
-    app = FastAPI(
-        title=TITLE,
-        version=VERSION
-    )
+    app = FastAPI(title=TITLE, version=VERSION)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -24,5 +21,6 @@ def initialize_application():
     app.include_router(subs_rt)
     app.include_router(rpay_rt)
     app.include_router(notify_rt)
+    app.include_router(course_rt)
 
     return app
