@@ -245,11 +245,19 @@ def get_farming_course():
 
 ##--USER--##
 @course_rt.get(
-    "/user/list",
+    "/list/user",
     status_code=status.HTTP_200_OK,
     response_model=List[CourseItemUserResponse],
 )
-def list__user_courses():
-    items = db.read_all_documents(TableConfig.USER.value)
-
-    return
+def list__user_courses(user_id: str):
+    items = db.read_all_documents(TableConfig.COURSE_DATA.value)
+    user_ = db.read_data(TableConfig.USER.value, user_id)
+    if not user_:
+        raise HTTPException(status_code=404, detail="User not found")
+    active_courses = user_.get("subscriptions", {}).keys()
+    res = []
+    for item in items:
+        if item["id"] in active_courses:
+            item["active"] = True
+        res.append(CourseItemUserResponse(**item))
+    return res
