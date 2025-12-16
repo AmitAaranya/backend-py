@@ -1,5 +1,5 @@
 import io
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 import uuid
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
@@ -9,9 +9,10 @@ from app.model.course_model import (
     CourseItemDB,
     CourseItemUserResponse,
     ItemInfo,
+    ItemInfoPayload,
 )
 from app.model.model import TableConfig
-from utils.image import compress_image, create_thumbnail_bytes
+from app.utils.image import compress_image, create_thumbnail_bytes
 from app.settings import ENV, logger
 
 
@@ -116,18 +117,67 @@ def stop_live_course(course_id: str):
 
 
 @course_rt.put("/content/{course_id}", status_code=status.HTTP_200_OK)
-def update_content(course_id: str, content: List[ItemInfo]):
+def update_whole_content(course_id: str, content: List[ItemInfo]):
     item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
     if not item:
         raise HTTPException(status_code=404, detail="Course not found")
+    content_list = [c.model_dump() for c in content]
+    item.update({"content": content_list})
+    return {"message": "Content updated successfully"}
 
+
+@course_rt.post("/content/{course_id}", status_code=status.HTTP_200_OK)
+def add_text_content(course_id: str, content: List[ItemInfoPayload]):
+    item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Course not found")
+    old_content = item.get().get("content")
+    if not old_content:
+        old_content = []
+    new_content = [
+        ItemInfo(content_type=c.content_type, data=c.data).model_dump() for c in content
+    ]
+    old_content.extend(new_content)
+
+    item.update({"content": old_content})
+    return {"message": "Content updated successfully"}
+
+
+@course_rt.put("/content/{course_id}/{content_id}", status_code=status.HTTP_200_OK)
+def update_single_content(
+    course_id: str, content_id: str, content_data: Union[str, List[str]]
+):
+    item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Course not found")
+    content = item.get().get("content")
+    if not content:
+        return {"message": "No content to update"}
+
+    for c in content:
+        if c["id"] == content_id:
+            c["data"] = content_data
+            break
     item.update({"content": content})
     return {"message": "Content updated successfully"}
 
 
+@course_rt.delete("/content/{course_id}/{content_id}", status_code=status.HTTP_200_OK)
+def delete_single_content(course_id: str, content_id: str):
+    item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Course not found")
+    content = item.get().get("content")
+    if not content:
+        return {"message": "No content to delete"}
+    content = [c for c in content if c["id"] != content_id]
+    item.update({"content": content})
+    return {"message": "Content deleted successfully"}
+
+
 @course_rt.post("/photo/{course_id}", status_code=status.HTTP_200_OK)
 async def add_photo(course_id: str, image: UploadFile):
-    blob_name = f"course/{id}/{image.filename}"
+    blob_name = f"course/{course_id}/{image.filename}"
     image_bytes = await image.read()
     compressed_image_bytes = compress_image(image_bytes)
     storage.upload_bytes(
@@ -143,22 +193,11 @@ async def add_photo(course_id: str, image: UploadFile):
     content = item.get().get("content")
     if not content:
         content = []
-    content.append(ItemInfo(content_type="image", data=str(image.filename)))
+    content.append(
+        ItemInfo(content_type="image", data=str(image.filename)).model_dump()
+    )
     item.update({"content": content})
     return {"message": "Photo added successfully"}
-
-
-@course_rt.delete("/content/{course_id}/{content_id}", status_code=status.HTTP_2)
-def delete_content(course_id: str, content_id: str):
-    item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Course not found")
-    content = item.get().get("content")
-    if not content:
-        return {"message": "No content to delete"}
-    content = [c for c in content if c.id != content_id]
-    item.update({"content": content})
-    return {"message": "Content deleted successfully"}
 
 
 @course_rt.put("/pdf/{course_id}", status_code=status.HTTP_200_OK)
@@ -202,3 +241,15 @@ def get_farming_course():
         TableConfig.COURSE_DATA.value, "course_type", "farming"
     )
     return item
+
+
+##--USER--##
+@course_rt.get(
+    "/user/list",
+    status_code=status.HTTP_200_OK,
+    response_model=List[CourseItemUserResponse],
+)
+def list__user_courses():
+    items = db.read_all_documents(TableConfig.USER.value)
+
+    return

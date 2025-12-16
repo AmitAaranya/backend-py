@@ -3,12 +3,15 @@ import uuid
 from pydantic import BaseModel, Field
 
 
-class ItemInfo(BaseModel):
+class ItemInfoPayload(BaseModel):
+    content_type: Literal["paragraph", "image", "bullet1", "bullet2"]
+    data: Union[str, List[str]]
+
+
+class ItemInfo(ItemInfoPayload):
     id: str = Field(
         default_factory=lambda: str(uuid.uuid4()), description="Unique identifier"
     )
-    content_type: Literal["paragraph", "image", "bullet1", "bullet2"]
-    data: Union[str, List[str]]
 
 
 class CourseItem(BaseModel):

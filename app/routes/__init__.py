@@ -6,6 +6,7 @@ from .redis import redis_rt
 from .subscription import subs_rt
 from .razorpay import rpay_rt
 from .notifications import notify_rt
+from .courses import course_rt
 
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "redis_rt",
     "subs_rt",
     "rpay_rt",
-    "notify_rt"
+    "notify_rt",
+    "course_rt",
 ]
