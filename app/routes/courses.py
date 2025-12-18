@@ -117,12 +117,14 @@ def stop_live_course(course_id: str):
 
 
 @course_rt.put("/content/{course_id}", status_code=status.HTTP_200_OK)
-def update_whole_content(course_id: str, content: List[ItemInfo]):
+def update_whole_content(
+    course_id: str, title: str, crop: str, content: List[ItemInfo], price: float
+):
     item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
     if not item:
         raise HTTPException(status_code=404, detail="Course not found")
     content_list = [c.model_dump() for c in content]
-    item.update({"content": content_list})
+    item.update({"title": title, "crop": crop, "content": content_list, "price": price})
     return {"message": "Content updated successfully"}
 
 
