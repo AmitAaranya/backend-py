@@ -96,6 +96,14 @@ def list_courses():
     return [CourseItemDB(**item) for item in items if item.get("course_type") == "pdf"]
 
 
+@course_rt.get("/content/{course_id}", status_code=status.HTTP_200_OK)
+def get_course_details(course_id: str):
+    item = db.read_data(TableConfig.COURSE_DATA.value, course_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Course not found")
+    return item
+
+
 @course_rt.put("/live/{course_id}", status_code=status.HTTP_200_OK)
 def live_course(course_id: str):
     item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
