@@ -22,6 +22,13 @@ class CourseItem(BaseModel):
     price: float
 
 
+class CourseUpdateItem(BaseModel):
+    title: str
+    crop: str
+    content: List[ItemInfo]
+    price: float
+
+
 class CourseItemDB(CourseItem):
     course_type: Literal["pdf", "farming"]
     live: bool = False
