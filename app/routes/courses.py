@@ -8,6 +8,7 @@ from app.model.course_model import (
     CourseItem,
     CourseItemDB,
     CourseItemUserResponse,
+    CourseUpdateItem,
     ItemInfo,
     ItemInfoPayload,
 )
@@ -125,14 +126,12 @@ def stop_live_course(course_id: str):
 
 
 @course_rt.put("/content/{course_id}", status_code=status.HTTP_200_OK)
-def update_whole_content(
-    course_id: str, title: str, crop: str, content: List[ItemInfo], price: float
-):
+def update_whole_content(course_id, data: CourseUpdateItem):
     item = db.get_doc_ref(TableConfig.COURSE_DATA.value, course_id)
     if not item:
         raise HTTPException(status_code=404, detail="Course not found")
-    content_list = [c.model_dump() for c in content]
-    item.update({"title": title, "crop": crop, "content": content_list, "price": price})
+    data_dict = data.model_dump()
+    item.update(data_dict)
     return {"message": "Content updated successfully"}
 
 
