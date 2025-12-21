@@ -22,7 +22,7 @@ subs_rt = APIRouter(prefix="/subscription", tags=["subscription"])
 def create_subscription(data: SubscriptionCreate, user_id, price_paid):
     # Create subscription ID based on timestamp
     subscription_id = f"sub_{int(datetime.now().timestamp())}"
-    item = db.read_data(TableConfig.SELL_ITEM.name, data.course_id)
+    item = db.read_data(TableConfig.COURSE_DATA.value, data.course_id)
     if not item:
         raise HTTPException(404, "Course ID not found")
 
