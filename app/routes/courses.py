@@ -269,5 +269,8 @@ def list__user_courses(user_id: str = Depends(get_user_id)):
     for item in items:
         if item["id"] in active_courses:
             item["active"] = True
-        res.append(CourseItemUserResponse(**item))
+            res.append(CourseItemUserResponse(**item))
+        elif item["live"]:
+            item["active"] = False
+            res.append(CourseItemUserResponse(**item))
     return res

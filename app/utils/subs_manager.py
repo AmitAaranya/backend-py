@@ -5,8 +5,7 @@ from enum import Enum
 
 
 class SubscriptionManager:
-    def __init__(self):
-        ...
+    def __init__(self): ...
 
 
 class SubscriptionStatus(str, Enum):
@@ -39,6 +38,7 @@ class SubscriptionCreate(BaseModel):
     duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
     order_id: str
 
+
 class SubscriptionOfflineCreate(BaseModel):
     course_id: str
     duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
@@ -53,8 +53,6 @@ class SubscriptionStatusResponse(BaseModel):
 
 class SellItemSubscriptionResponse(BaseModel):
     id: str
-    name: str
-    crops: str
-    desc: str
-    desc_hn: str
+    title: str
+    crop: str
     expiry_date: Optional[datetime]
