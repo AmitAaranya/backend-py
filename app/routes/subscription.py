@@ -115,7 +115,7 @@ def get_active_subscriptions(user_id: str = Depends(get_user_id)):
         return course_details
 
     for course_id, subs_ref in active_courses.items():
-        course = db.read_data(TableConfig.SELL_ITEM.value, course_id)
+        course = db.read_data(TableConfig.COURSE_DATA.value, course_id)
         subs = db.get_document_ref(subs_ref.path).get().to_dict()
         if not subs:
             continue
