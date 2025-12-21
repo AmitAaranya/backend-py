@@ -15,6 +15,7 @@ from app.model.course_model import (
 from app.model.model import TableConfig
 from app.utils.image import compress_image, create_thumbnail_bytes
 from app.settings import ENV, logger
+from app.utils.security import get_user_id
 
 
 course_rt = APIRouter(prefix="/course", tags=["course"])
@@ -258,7 +259,7 @@ def get_farming_course():
     status_code=status.HTTP_200_OK,
     response_model=List[CourseItemUserResponse],
 )
-def list__user_courses(user_id: str):
+def list__user_courses(user_id: str = Depends(get_user_id)):
     items = db.read_all_documents(TableConfig.COURSE_DATA.value)
     user_ = db.read_data(TableConfig.USER.value, user_id)
     if not user_:
