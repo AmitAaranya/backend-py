@@ -261,6 +261,8 @@ def get_farming_course():
 )
 def list__user_courses(user_id: str = Depends(get_user_id)):
     items = db.read_all_documents(TableConfig.COURSE_DATA.value)
+    if user_id is None:
+        return [CourseItemUserResponse(**item) for item in items if item["live"]]
     user_ = db.read_data(TableConfig.USER.value, user_id)
     if not user_:
         raise HTTPException(status_code=404, detail="User not found")
