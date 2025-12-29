@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.utils.security import get_user_id
 from app.core import db
 from app.utils.subs_manager import (
@@ -19,10 +19,18 @@ from app.settings import logger
 subs_rt = APIRouter(prefix="/subscription", tags=["subscription"])
 
 
-def create_subscription(data: SubscriptionCreate, user_id, price_paid):
+def create_subscription(
+    data: SubscriptionCreate, user_id, price_paid, course_type="pdf"
+):
     # Create subscription ID based on timestamp
     subscription_id = f"sub_{int(datetime.now().timestamp())}"
-    item = db.read_data(TableConfig.COURSE_DATA.value, data.course_id)
+    if course_type == "pdf":
+        item = db.read_data(TableConfig.COURSE_DATA.value, data.course_id)
+    elif course_type == "farming":
+        item = db.read_data(TableConfig.FarmingSubscriptionCourse.value, data.course_id)
+    else:
+        raise HTTPException(400, "Invalid course type")
+
     if not item:
         raise HTTPException(404, "Course ID not found")
 
@@ -58,22 +66,35 @@ def create_subscription(data: SubscriptionCreate, user_id, price_paid):
         raise HTTPException(status_code=404, detail="User not found")
 
     subscription_dict = subscription.model_dump()
-    try:
-        subs_history = user_doc.get("subscriptions")
-    except:
-        subs_history = {}
-
-    if subscription.course_id in subs_history.keys():
-        raise HTTPException(status_code=400, detail="Course already subscribed")
-
     subs_ref = db.add_data(
         TableConfig.SUBSCRIPTION.value, subscription_id, subscription_dict
     )
-    subs_history[subscription.course_id] = subs_ref
+    if course_type == "pdf":
+        try:
+            subs_history = user_doc.get("subscriptions")
+        except:
+            subs_history = {}
 
-    user_doc_ref.set({"subscriptions": subs_history}, merge=True)
+        if subscription.course_id in subs_history.keys():
+            raise HTTPException(status_code=400, detail="Course already subscribed")
 
-    logger.debug("Subscription created successfully")
+        subs_history[subscription.course_id] = subs_ref
+        user_doc_ref.set({"subscriptions": subs_history}, merge=True)
+        logger.debug("Course subscription created successfully")
+    elif course_type == "farming":
+        try:
+            subs_expiry = user_doc.get("farming_subs_expiry")
+        except:
+            subs_expiry = None
+
+        if subs_expiry and subs_expiry > datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=400, detail="Farming subscription already active"
+            )
+
+        user_doc_ref.set({"farming_subs_expiry": expiry_date}, merge=True)
+        logger.debug("Farming subscription created successfully")
+
     return subscription.course_id
 
 
@@ -156,3 +177,17 @@ async def get_all_user_courses(course_id: str):
         user_res.append(UserResponse(**user))
 
     return user_res
+
+
+# @subs_rt.post("/farming/create")
+# def create_subscription_user_farming(data: SubscriptionCreate, user_id=Depends(get_user_id)):
+#     order_details = razorpay_client.get_order_details(data.order_id)
+#     price_paid = int(order_details.get("amount_paid", 0))
+#     return create_subscription(data, user_id, price_paid)
+
+
+@subs_rt.post("/farming/offline/create")
+def create_offline_subscription_farming(data: SubscriptionOfflineCreate, user_id: str):
+    return create_subscription(
+        data, user_id, price_paid=data.price_paid, course_type="farming"
+    )

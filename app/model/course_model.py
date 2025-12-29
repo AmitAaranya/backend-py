@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Literal, Union
 import uuid
 from pydantic import BaseModel, Field
@@ -36,3 +37,20 @@ class CourseItemDB(CourseItem):
 
 class CourseItemUserResponse(CourseItem):
     active: bool = False
+
+
+class SubscriptionDuration(int, Enum):
+    DAYS_30 = 30
+    DAYS_180 = 180
+    DAYS_365 = 365
+    DAYS_UNLIMITED = -1
+
+
+class FarmingSubscriptionCreate(BaseModel):
+    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
+    price: float
+
+
+class FamingSubscriptionItemDB(FarmingSubscriptionCreate):
+    id: str = Field(..., description="Unique identifier")
+    live: bool = False

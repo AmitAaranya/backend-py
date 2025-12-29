@@ -9,6 +9,8 @@ from app.model.course_model import (
     CourseItemDB,
     CourseItemUserResponse,
     CourseUpdateItem,
+    FamingSubscriptionItemDB,
+    FarmingSubscriptionCreate,
     ItemInfo,
     ItemInfoPayload,
 )
@@ -245,14 +247,6 @@ async def get_profile_image(course_id, file_name):
         raise HTTPException(status_code=500, detail=f"Failed to retrieve file: {e}")
 
 
-@course_rt.get("/farming", status_code=status.HTTP_200_OK, response_model=CourseItemDB)
-def get_farming_course():
-    item = db.read_data_by_key_equal(
-        TableConfig.COURSE_DATA.value, "course_type", "farming"
-    )
-    return item
-
-
 ##--USER--##
 @course_rt.get(
     "/list/user",
@@ -276,3 +270,42 @@ def list__user_courses(user_id: str = Depends(get_user_id)):
             item["active"] = False
             res.append(CourseItemUserResponse(**item))
     return res
+
+
+##--FARMING SUBSCRIPTION--##
+@course_rt.post("/farming/subscription/create", status_code=status.HTTP_200_OK)
+def create_farming_subscription(data: FarmingSubscriptionCreate):
+    id = str(uuid.uuid4())
+    item = FamingSubscriptionItemDB(id=id, **data.model_dump())
+    db.add_data(TableConfig.FarmingSubscriptionCourse.value, id, item.model_dump())
+
+    return {"message": "Course added successfully"}
+
+
+@course_rt.get("/farming/subscription/list", status_code=status.HTTP_200_OK)
+def list_farming_courses():
+    items = db.read_all_documents(TableConfig.FarmingSubscriptionCourse.value)
+    return [FamingSubscriptionItemDB(**item) for item in items]
+
+
+@course_rt.put("/farming/subscription/live/{course_id}", status_code=status.HTTP_200_OK)
+def live_course_farming(course_id: str):
+    item = db.get_doc_ref(TableConfig.FarmingSubscriptionCourse.value, course_id)
+    item.update({"live": True})
+    return {"message": "Course is live now"}
+
+
+@course_rt.put("/farming/subscription/down/{course_id}", status_code=status.HTTP_200_OK)
+def stop_live_course_farming(course_id: str):
+    item = db.get_doc_ref(TableConfig.FarmingSubscriptionCourse.value, course_id)
+    item.update({"live": False})
+    return {"message": "Subscription is down now"}
+
+
+@course_rt.put(
+    "/farming/subscription/update/{course_id}", status_code=status.HTTP_200_OK
+)
+def update_farming_course(course_id: str, data: FarmingSubscriptionCreate):
+    item = db.get_doc_ref(TableConfig.FarmingSubscriptionCourse.value, course_id)
+    item.update(data.model_dump())
+    return {"message": "Course updated successfully"}

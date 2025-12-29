@@ -89,18 +89,26 @@ def authenticate(payload: AuthRequest, role: str = Header("user", alias="X-Role"
 
 @user_rt.get("/fetch", status_code=status.HTTP_200_OK, response_model=UserResponse)
 def fetch_user(
-    user_id=Depends(get_user_id), role: str = Header("user", alias="X-Role")
+    user_id=Depends(get_user_id),
+    role: str = Header("user", alias="X-Role"),
+    # user_id="ZZrn7Y1irxfTHwadnh5iXvAjVi32",
+    # role: str = Header("user", alias="X-Role"),
 ):
     # Fetch user data by mobile number
     user = db.read_data(TableConfig[role.upper()].value, doc_id=user_id)
+
     if not user:
         raise HTTPException(status_code=401, detail="No User logged in")
+
+    subs_expiry = user.get("farming_subs_expiry")
+    if subs_expiry:
+        user["farming_subs_expiry"] = subs_expiry
 
     return UserResponse(**user, role=role)
 
 
 @user_rt.get("/fetch/mb", status_code=status.HTTP_200_OK, response_model=UserResponse)
-def fetch_user(mobile_number):
+def fetch_user_by_mobile(mobile_number):
     # Fetch user data by mobile number
     if len(mobile_number) < 10:
         raise HTTPException(

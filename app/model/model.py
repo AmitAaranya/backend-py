@@ -48,6 +48,7 @@ class UserResponse(BaseModel):
     email_id: Any = ""
     mobile_number: str = ""
     role: str = "user"
+    farming_subs_expiry: Optional[datetime] = None
 
 
 class PhoneUserCreateRequest(BaseModel):
@@ -180,3 +181,4 @@ class TableConfig(Enum):
     CALL_REQUEST = "CallRequest"
     DEVICE = "Device"
     COURSE_DATA = "CourseData"
+    FarmingSubscriptionCourse = "FarmingSubscriptionCourse"
