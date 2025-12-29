@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timedelta, timezone
 from app.utils.security import get_user_id
@@ -191,3 +192,19 @@ def create_offline_subscription_farming(data: SubscriptionOfflineCreate, user_id
     return create_subscription(
         data, user_id, price_paid=data.price_paid, course_type="farming"
     )
+
+
+@subs_rt.get("/farming/users", response_model=List[UserResponse])
+def fetch_users_farming_subscriptions():
+    # Fetch user data by mobile number
+    users = db.read_all_documents(TableConfig.USER.value)
+
+    if not users:
+        raise HTTPException(status_code=401, detail="No User found")
+    user_list = []
+    for user in users:
+        subs_expiry = user.get("farming_subs_expiry")
+        if subs_expiry:
+            user_list.append(UserResponse(**user))
+
+    return user_list
