@@ -32,7 +32,7 @@ class Subscription(BaseModel):
     user_id: str
     course_id: str
     start_date: datetime
-    duration_days: SubscriptionDuration
+    duration_days: int
     price: float
     order_id: str
     expiry_date: Optional[datetime]
@@ -41,7 +41,6 @@ class Subscription(BaseModel):
 
 class SubscriptionCreate(BaseModel):
     course_id: str
-    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
     order_id: str
 
 

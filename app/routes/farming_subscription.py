@@ -72,11 +72,11 @@ def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
         raise HTTPException(status_code=500, detail="Error fetching subscriptions")
 
 
-@farming_rt.get("/{subscription_id}/details", status_code=status.HTTP_200_OK)
-def get_farming_subscription_details(subscription_id: str):
+@farming_rt.get("/{course_id}/details", status_code=status.HTTP_200_OK)
+def get_farming_subscription_details(course_id: str):
     """Get all data for a specific farming subscription by ID"""
     try:
-        subscription = db.read_data(TableConfig.FarmingSubscriptionCourse.value, subscription_id)
+        subscription = db.read_data(TableConfig.FarmingSubscriptionCourse.value, course_id)
         if not subscription:
             raise HTTPException(status_code=404, detail="Subscription not found")
         return subscription
@@ -95,13 +95,13 @@ async def create_farming_subscription(
     thumbnail: Optional[UploadFile] = File(None),
 ):
     """Create a new farming subscription with optional thumbnail"""
-    subscription_id = str(uuid.uuid4())
+    course_id = str(uuid.uuid4())
     
     # Upload thumbnail if provided
     thumbnail_filename = None
     if thumbnail:
         file_ext = os.path.splitext(thumbnail.filename)[1]
-        thumbnail_filename = f"farming_subscription/{subscription_id}/thumbnail{file_ext}"
+        thumbnail_filename = f"farming_subscription/{course_id}/thumbnail{file_ext}"
         image_bytes = await thumbnail.read()
         thumbnail_image_bytes = create_thumbnail_bytes(image_bytes)
         storage.upload_bytes(
@@ -113,7 +113,7 @@ async def create_farming_subscription(
     
     # Create farming subscription object
     subscription_data = {
-        "id": subscription_id,
+        "id": course_id,
         "cropName": cropName,
         "price": price,
         "duration_days": duration_days,
@@ -124,16 +124,16 @@ async def create_farming_subscription(
     
     db.add_data(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id,
+        course_id,
         subscription_data
     )
     
-    return {"subscription_id": subscription_id}
+    return {"course_id": course_id}
 
 
-@farming_rt.post("/{subscription_id}/content/text", status_code=status.HTTP_200_OK)
+@farming_rt.post("/{course_id}/content/text", status_code=status.HTTP_200_OK)
 def add_farming_subscription_text_content(
-    subscription_id: str,
+    course_id: str,
     content: List[TextContentPayload],
 ):
     """Add text content (paragraph, bullet1, bullet2) to farming subscription
@@ -146,7 +146,7 @@ def add_farming_subscription_text_content(
     """
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -169,15 +169,15 @@ def add_farming_subscription_text_content(
     return new_content_items
 
 
-@farming_rt.post("/{subscription_id}/content/image", status_code=status.HTTP_200_OK)
+@farming_rt.post("/{course_id}/content/image", status_code=status.HTTP_200_OK)
 async def add_farming_subscription_image_content(
-    subscription_id: str,
+    course_id: str,
     image: UploadFile = File(...),
 ):
     """Add image content to farming subscription and return image ID"""
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -186,7 +186,7 @@ async def add_farming_subscription_image_content(
     # Generate content ID
     content_id = str(uuid.uuid4())
     file_ext = os.path.splitext(image.filename)[1]
-    blob_name = f"farming_subscription/{subscription_id}/{content_id}{file_ext}"
+    blob_name = f"farming_subscription/{course_id}/{content_id}{file_ext}"
     
     # Compress and upload image
     image_bytes = await image.read()
@@ -218,9 +218,9 @@ async def add_farming_subscription_image_content(
     return [content_dict]
 
 
-@farming_rt.put("/{subscription_id}/content", status_code=status.HTTP_200_OK)
+@farming_rt.put("/{course_id}/content", status_code=status.HTTP_200_OK)
 def update_farming_subscription_content(
-    subscription_id: str,
+    course_id: str,
     request_body: dict,
 ):
     """Update/reorder all content by ID list. Items not in list are removed.
@@ -232,7 +232,7 @@ def update_farming_subscription_content(
     
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -256,12 +256,12 @@ def update_farming_subscription_content(
     return {"status": 200, "message": "Content updated successfully"}
 
 
-@farming_rt.get("/{subscription_id}/live", status_code=status.HTTP_200_OK)
-def make_farming_subscription_live(subscription_id: str):
+@farming_rt.get("/{course_id}/live", status_code=status.HTTP_200_OK)
+def make_farming_subscription_live(course_id: str):
     """Make farming subscription live"""
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -272,12 +272,12 @@ def make_farming_subscription_live(subscription_id: str):
     return {"message": "Subscription is live now"}
 
 
-@farming_rt.get("/{subscription_id}/down", status_code=status.HTTP_200_OK)
-def take_farming_subscription_down(subscription_id: str):
+@farming_rt.get("/{course_id}/down", status_code=status.HTTP_200_OK)
+def take_farming_subscription_down(course_id: str):
     """Take farming subscription offline"""
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -288,9 +288,9 @@ def take_farming_subscription_down(subscription_id: str):
     return {"message": "Subscription is down now"}
 
 
-@farming_rt.put("/{subscription_id}", status_code=status.HTTP_200_OK)
+@farming_rt.put("/{course_id}", status_code=status.HTTP_200_OK)
 async def update_farming_subscription(
-    subscription_id: str,
+    course_id: str,
     cropName: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
     duration_days: Optional[int] = Form(None),
@@ -299,7 +299,7 @@ async def update_farming_subscription(
     """Update farming subscription details (cropName, price, duration, thumbnail)"""
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
-        subscription_id
+        course_id
     )
     
     if not subscription.get().exists:
@@ -319,7 +319,7 @@ async def update_farming_subscription(
     # Handle thumbnail update
     if thumbnail:
         file_ext = os.path.splitext(thumbnail.filename)[1]
-        thumbnail_filename = f"farming_subscription/{subscription_id}/thumbnail{file_ext}"
+        thumbnail_filename = f"farming_subscription/{course_id}/thumbnail{file_ext}"
         image_bytes = await thumbnail.read()
         thumbnail_image_bytes = create_thumbnail_bytes(image_bytes)
         storage.upload_bytes(
@@ -348,9 +348,9 @@ def create_offline_subscription_farming(data: SubscriptionOfflineCreate, user_id
     )
 
 
-@farming_rt.get("/users/{subscription_id}", response_model=List[UserResponse])
-def fetch_users_farming_subscriptions(subscription_id: str):
-    # Fetch user data by subscription_id
+@farming_rt.get("/users/{course_id}", response_model=List[UserResponse])
+def fetch_users_farming_subscriptions(course_id: str):
+    # Fetch user data by course_id
     users = db.read_all_documents(TableConfig.USER.value)
 
     if not users:
@@ -358,6 +358,6 @@ def fetch_users_farming_subscriptions(subscription_id: str):
     user_list = []
     for user in users:
         farming_subs = user.get("farmingSubs")
-        if farming_subs and subscription_id in farming_subs:
+        if farming_subs and course_id in farming_subs:
             user_list.append(UserResponse(**user))
     return user_list
