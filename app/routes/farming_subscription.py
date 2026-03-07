@@ -5,10 +5,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
 
 from app.core import db, storage
-from app.model.course_model import ItemInfo, ItemInfoPayload, TextContentPayload
-from app.model.model import TableConfig
+from app.model.course_model import ItemInfo, ItemInfoPayload, TextContentPayload, FarmingSubscriptionResponse
+from app.model.model import TableConfig, UserResponse
 from app.settings import ENV, logger
 from app.utils.image import compress_image, create_thumbnail_bytes
+from app.utils.security import get_user_id
+from app.utils.subs_manager import SubscriptionOfflineCreate, create_subscription
 
 
 farming_rt = APIRouter(prefix="/farming", tags=["farming"])
@@ -33,6 +35,40 @@ def get_all_farming_subscriptions():
         ]
     except Exception as e:
         logger.error(f"Error fetching farming subscriptions: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching subscriptions")
+
+
+@farming_rt.get("/list/{user_id}", response_model=List[FarmingSubscriptionResponse], status_code=status.HTTP_200_OK)
+def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
+    """Get all farming subscriptions with active status for a specific user"""
+    try:
+        # Get user data
+        user = db.read_data(TableConfig.USER.value, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Get user's active farming subscriptions
+        user_farming_subs = user.get("farmingSubs", [])
+        
+        # Get all farming subscriptions
+        subscriptions = db.read_all_documents(TableConfig.FarmingSubscriptionCourse.value)
+        if not subscriptions:
+            return []
+        
+        # Return subscriptions with active status
+        return [
+            FarmingSubscriptionResponse(
+                id=sub.get("id"),
+                thumbnail=sub.get("thumbnail"),
+                cropName=sub.get("cropName"),
+                active=sub.get("id") in user_farming_subs
+            )
+            for sub in subscriptions
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching farming subscriptions for user: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching subscriptions")
 
 
@@ -303,3 +339,25 @@ async def update_farming_subscription(
     subscription.update(update_data)
     
     return {"message": "Subscription updated successfully"}
+
+
+@farming_rt.post("/offline/create")
+def create_offline_subscription_farming(data: SubscriptionOfflineCreate, user_id: str):
+    return create_subscription(
+        data, user_id, price_paid=data.price_paid, course_type="farming"
+    )
+
+
+@farming_rt.get("/users/{subscription_id}", response_model=List[UserResponse])
+def fetch_users_farming_subscriptions(subscription_id: str):
+    # Fetch user data by subscription_id
+    users = db.read_all_documents(TableConfig.USER.value)
+
+    if not users:
+        raise HTTPException(status_code=401, detail="No User found")
+    user_list = []
+    for user in users:
+        farming_subs = user.get("farmingSubs")
+        if farming_subs and subscription_id in farming_subs:
+            user_list.append(UserResponse(**user))
+    return user_list

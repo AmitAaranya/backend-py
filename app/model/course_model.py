@@ -50,6 +50,13 @@ class CourseUpdateItem(BaseModel):
     price: float
 
 
+class FarmingSubscriptionResponse(BaseModel):
+    id: str
+    thumbnail: str
+    cropName: str
+    active: bool
+
+
 class CourseItemDB(CourseItem):
     course_type: Literal["pdf", "farming"]
     live: bool = False

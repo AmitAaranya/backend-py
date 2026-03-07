@@ -100,10 +100,6 @@ def fetch_user(
     if not user:
         raise HTTPException(status_code=401, detail="No User logged in")
 
-    subs_expiry = user.get("farming_subs_expiry")
-    if subs_expiry:
-        user["farming_subs_expiry"] = subs_expiry
-
     return UserResponse(**user, role=role)
 
 
