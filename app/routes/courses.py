@@ -5,12 +5,9 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from fastapi.responses import StreamingResponse
 from app.core import db, storage
 from app.model.course_model import (
-    CourseItem,
     CourseItemDB,
     CourseItemUserResponse,
     CourseUpdateItem,
-    FarmingSubscriptionItemDB,
-    FarmingSubscriptionCreate,
     ItemInfo,
     ItemInfoPayload,
 )

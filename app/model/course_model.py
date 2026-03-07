@@ -64,23 +64,3 @@ class CourseItemDB(CourseItem):
 
 class CourseItemUserResponse(CourseItem):
     active: bool = False
-
-
-class SubscriptionDuration(int, Enum):
-    DAYS_30 = 30
-    DAYS_180 = 180
-    DAYS_365 = 365
-    DAYS_UNLIMITED = -1
-
-
-class FarmingSubscriptionCreate(BaseModel):
-    cropName: str
-    price: float
-    duration_days: SubscriptionDuration
-    thumbnail: str | None = None
-    content: List[ItemInfo] = Field(default_factory=list)
-
-
-class FarmingSubscriptionItemDB(FarmingSubscriptionCreate):
-    id: str = Field(..., description="Unique identifier")
-    live: bool = False
