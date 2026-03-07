@@ -1,12 +1,32 @@
 from enum import Enum
 from typing import List, Literal, Union
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ItemInfoPayload(BaseModel):
     content_type: Literal["paragraph", "image", "bullet1", "bullet2"]
     data: Union[str, List[str]]
+
+
+class TextContentPayload(BaseModel):
+    """Pydantic model for text content with data type validation"""
+    content_type: Literal["paragraph", "bullet1", "bullet2"]
+    data: Union[str, List[str]]
+    
+    @field_validator("data")
+    @classmethod
+    def validate_data_format(cls, data: Union[str, List[str]], info):
+        content_type = info.data.get("content_type")
+        
+        if content_type == "paragraph":
+            if not isinstance(data, str):
+                raise ValueError("For 'paragraph', data must be a string")
+        elif content_type in ["bullet1", "bullet2"]:
+            if not isinstance(data, list) or not all(isinstance(x, str) for x in data):
+                raise ValueError(f"For '{content_type}', data must be a list of strings")
+        
+        return data
 
 
 class ItemInfo(ItemInfoPayload):
