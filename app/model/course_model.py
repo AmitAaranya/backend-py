@@ -1,12 +1,32 @@
 from enum import Enum
 from typing import List, Literal, Union
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ItemInfoPayload(BaseModel):
     content_type: Literal["paragraph", "image", "bullet1", "bullet2"]
     data: Union[str, List[str]]
+
+
+class TextContentPayload(BaseModel):
+    """Pydantic model for text content with data type validation"""
+    content_type: Literal["paragraph", "bullet1", "bullet2"]
+    data: Union[str, List[str]]
+    
+    @field_validator("data")
+    @classmethod
+    def validate_data_format(cls, data: Union[str, List[str]], info):
+        content_type = info.data.get("content_type")
+        
+        if content_type == "paragraph":
+            if not isinstance(data, str):
+                raise ValueError("For 'paragraph', data must be a string")
+        elif content_type in ["bullet1", "bullet2"]:
+            if not isinstance(data, list) or not all(isinstance(x, str) for x in data):
+                raise ValueError(f"For '{content_type}', data must be a list of strings")
+        
+        return data
 
 
 class ItemInfo(ItemInfoPayload):
@@ -30,6 +50,13 @@ class CourseUpdateItem(BaseModel):
     price: float
 
 
+class FarmingSubscriptionResponse(BaseModel):
+    id: str
+    thumbnail: str
+    cropName: str
+    active: bool
+
+
 class CourseItemDB(CourseItem):
     course_type: Literal["pdf", "farming"]
     live: bool = False
@@ -47,10 +74,13 @@ class SubscriptionDuration(int, Enum):
 
 
 class FarmingSubscriptionCreate(BaseModel):
-    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
+    cropName: str
     price: float
+    duration_days: SubscriptionDuration
+    thumbnail: str | None = None
+    content: List[ItemInfo] = Field(default_factory=list)
 
 
-class FamingSubscriptionItemDB(FarmingSubscriptionCreate):
+class FarmingSubscriptionItemDB(FarmingSubscriptionCreate):
     id: str = Field(..., description="Unique identifier")
     live: bool = False

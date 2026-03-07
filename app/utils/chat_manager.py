@@ -67,12 +67,11 @@ class ConnectionManager:
         chat_response = []
         for chat in all_chat:
             try:
-                subs_status, name = self.get_user_name(chat.id)
+                name = self.get_user_name(chat.id)
                 chat_response.append(
                     {
                         "id": chat.id,
                         "userName": name,
-                        "subscriber": subs_status,
                         "lastMessage": chat._data.get("messages")[-1].get("text"),
                         "all": chat._data.get("messages")[:50],
                     }
@@ -83,14 +82,7 @@ class ConnectionManager:
 
     def get_user_name(self, user_id: str):
         user = db.read_data(TableConfig.USER.value, user_id)
-        if user:
-            subs_expiry = user.get("farming_subs_expiry")
-            if subs_expiry:
-                status = subs_expiry > datetime.now(timezone.utc)
-            else:
-                status = False
-            return status, user.get("name", "User")
-        return False, "User"
+        return user.get("name", "User")
 
 
 # Save message with timestamp

@@ -7,6 +7,7 @@ from .subscription import subs_rt
 from .razorpay import rpay_rt
 from .notifications import notify_rt
 from .courses import course_rt
+from .farming_subscription import farming_rt
 
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "rpay_rt",
     "notify_rt",
     "course_rt",
+    "farming_rt",
 ]

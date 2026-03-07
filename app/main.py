@@ -22,5 +22,6 @@ def initialize_application():
     app.include_router(rpay_rt)
     app.include_router(notify_rt)
     app.include_router(course_rt)
+    app.include_router(farming_rt)
 
     return app

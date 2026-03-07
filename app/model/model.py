@@ -48,7 +48,6 @@ class UserResponse(BaseModel):
     email_id: Any = ""
     mobile_number: str = ""
     role: str = "user"
-    farming_subs_expiry: Optional[datetime] = None
 
 
 class PhoneUserCreateRequest(BaseModel):
