@@ -9,7 +9,7 @@ from app.model.course_model import (
     CourseItemDB,
     CourseItemUserResponse,
     CourseUpdateItem,
-    FamingSubscriptionItemDB,
+    FarmingSubscriptionItemDB,
     FarmingSubscriptionCreate,
     ItemInfo,
     ItemInfoPayload,
@@ -276,7 +276,7 @@ def list__user_courses(user_id: str = Depends(get_user_id)):
 @course_rt.post("/farming/subscription/create", status_code=status.HTTP_200_OK)
 def create_farming_subscription(data: FarmingSubscriptionCreate):
     id = str(uuid.uuid4())
-    item = FamingSubscriptionItemDB(id=id, **data.model_dump())
+    item = FarmingSubscriptionItemDB(id=id, **data.model_dump())
     db.add_data(TableConfig.FarmingSubscriptionCourse.value, id, item.model_dump())
 
     return {"message": "Course added successfully"}
@@ -285,7 +285,7 @@ def create_farming_subscription(data: FarmingSubscriptionCreate):
 @course_rt.get("/farming/subscription/list", status_code=status.HTTP_200_OK)
 def list_farming_courses():
     items = db.read_all_documents(TableConfig.FarmingSubscriptionCourse.value)
-    return [FamingSubscriptionItemDB(**item) for item in items]
+    return [FarmingSubscriptionItemDB(**item) for item in items]
 
 
 @course_rt.put("/farming/subscription/live/{course_id}", status_code=status.HTTP_200_OK)

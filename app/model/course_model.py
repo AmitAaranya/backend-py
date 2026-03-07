@@ -47,10 +47,13 @@ class SubscriptionDuration(int, Enum):
 
 
 class FarmingSubscriptionCreate(BaseModel):
-    duration_days: SubscriptionDuration = SubscriptionDuration.DAYS_UNLIMITED
+    cropName: str
     price: float
+    duration_days: SubscriptionDuration
+    thumbnail: str | None = None
+    content: List[ItemInfo] = Field(default_factory=list)
 
 
-class FamingSubscriptionItemDB(FarmingSubscriptionCreate):
+class FarmingSubscriptionItemDB(FarmingSubscriptionCreate):
     id: str = Field(..., description="Unique identifier")
     live: bool = False
