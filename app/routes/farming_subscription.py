@@ -72,7 +72,7 @@ def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
         raise HTTPException(status_code=500, detail="Error fetching subscriptions")
 
 
-@farming_rt.get("/{course_id}/details", status_code=status.HTTP_200_OK)
+@farming_rt.get("/details/{course_id}", status_code=status.HTTP_200_OK)
 def get_farming_subscription_details(course_id: str):
     """Get all data for a specific farming subscription by ID"""
     try:
@@ -218,17 +218,16 @@ async def add_farming_subscription_image_content(
     return [content_dict]
 
 
-@farming_rt.put("/{course_id}/content", status_code=status.HTTP_200_OK)
-def update_farming_subscription_content(
+@farming_rt.put("/{course_id}/content/order", status_code=status.HTTP_200_OK)
+def order_farming_subscription_content(
     course_id: str,
-    request_body: dict,
+    ids: List[str],
 ):
-    """Update/reorder all content by ID list. Items not in list are removed.
+    """Reorder all content by ID list. Items not in list are removed.
     
     Request body example:
-    {"ids": ["uuid1", "uuid2", ...]}
+    ["uuid1", "uuid2", ...]
     """
-    ids = request_body.get("ids", [])
     
     subscription = db.get_doc_ref(
         TableConfig.FarmingSubscriptionCourse.value,
