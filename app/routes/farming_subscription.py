@@ -218,15 +218,22 @@ async def add_farming_subscription_image_content(
     return [content_dict]
 
 
-@farming_rt.put("/{course_id}/content/order", status_code=status.HTTP_200_OK)
+@farming_rt.put("/{course_id}/content", status_code=status.HTTP_200_OK)
 def order_farming_subscription_content(
     course_id: str,
-    ids: List[str],
+    content: List[ItemInfo],
 ):
-    """Reorder all content by ID list. Items not in list are removed.
-    
+    """Reorder and update all content.
+
     Request body example:
-    ["uuid1", "uuid2", ...]
+    [
+        {
+            "id": "uuid1",
+            "content_type": "paragraph",
+            "data": "New text"
+        },
+        ...
+    ]
     """
     
     subscription = db.get_doc_ref(
@@ -237,18 +244,8 @@ def order_farming_subscription_content(
     if not subscription.get().exists:
         raise HTTPException(status_code=404, detail="Subscription not found")
     
-    # Get current content
-    current_data = subscription.get().to_dict()
-    current_content = current_data.get("content", [])
-    
-    # Build new content list based on provided IDs (in order)
-    # Only include items that exist in both old and new ID list
-    new_content = []
-    for content_id in ids:
-        for item in current_content:
-            if item.get("id") == content_id:
-                new_content.append(item)
-                break
+    # Convert payload to list of dicts
+    new_content = [item.model_dump() for item in content]
     
     subscription.update({"content": new_content})
     
