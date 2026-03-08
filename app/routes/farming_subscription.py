@@ -38,7 +38,7 @@ def get_all_farming_subscriptions():
         raise HTTPException(status_code=500, detail="Error fetching subscriptions")
 
 
-@farming_rt.get("/list/{user_id}", response_model=List[FarmingSubscriptionResponse], status_code=status.HTTP_200_OK)
+@farming_rt.get("/list/user", response_model=List[FarmingSubscriptionResponse], status_code=status.HTTP_200_OK)
 def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
     """Get all farming subscriptions with active status for a specific user"""
     try:

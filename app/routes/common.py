@@ -98,6 +98,45 @@ async def get_profile_image(user_id=Depends(get_user_id),
         )
 
 
+@common_rt.get("/file", status_code=status.HTTP_200_OK)
+async def get_file(blob_name: str):
+    """
+    Retrieve a raw file from blob storage by its blob name.
+    
+    Args:
+        blob_name: The blob name in storage (e.g., 'course/course_id/filename')
+    
+    Returns:
+        Raw file bytes for frontend usage
+    """
+    if not blob_name:
+        raise HTTPException(
+            status_code=400, detail="blob_name parameter is required"
+        )
+
+    try:
+        file_bytes = storage.get_bytes(
+            bucket_name=ENV.GOOGLE_STORAGE_BUCKET,
+            blob_name=blob_name
+        )
+
+        if not file_bytes:
+            raise HTTPException(
+                status_code=404, detail="File not found in storage"
+            )
+
+        return StreamingResponse(io.BytesIO(file_bytes))
+
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=404, detail=f"File not found: {blob_name}"
+            )
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve file: {str(e)}"
+        )
+
+
 @common_rt.get("/logs", response_class=PlainTextResponse)
 async def read_logs():
     LOG_FILE_PATH = "app.log"
