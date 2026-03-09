@@ -31,6 +31,7 @@ def get_all_farming_subscriptions():
                 "thumbnail": sub.get("thumbnail"),
                 "cropName": sub.get("cropName"),
                 "live": sub.get("live", False),
+                "price": sub.get("price", 0)
             }
             for sub in subscriptions
         ]
