@@ -29,7 +29,8 @@ def get_all_farming_subscriptions():
             {
                 "id": sub.get("id"),
                 "thumbnail": sub.get("thumbnail"),
-                "cropName": sub.get("cropName")
+                "cropName": sub.get("cropName"),
+                "live": sub.get("live", False),
             }
             for sub in subscriptions
         ]
@@ -63,7 +64,7 @@ def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
                 cropName=sub.get("cropName"),
                 active=sub.get("id") in user_farming_subs
             )
-            for sub in subscriptions
+            for sub in subscriptions if sub.get("live", False)
         ]
     except HTTPException:
         raise
