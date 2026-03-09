@@ -1,6 +1,7 @@
 import binascii
 import hashlib
 import os
+from typing import Optional
 from fastapi import HTTPException, Header
 import jwt
 
@@ -57,7 +58,7 @@ def get_user_id(
 
 
 def get_user_id_optional(
-    authorization: str | None = Header(None),
+    authorization: Optional[str] = Header(None),
     token_source: str = Header("password", alias="X-Token-Source"),
 ):
     """Return user id when token is valid, otherwise None for anonymous access."""
