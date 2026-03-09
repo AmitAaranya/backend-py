@@ -54,3 +54,28 @@ def get_user_id(
     except Exception as e:
         logger.error(f"Error verifying token: {str(e)}")
         return None
+
+
+def get_user_id_optional(
+    authorization: str | None = Header(None),
+    token_source: str = Header("password", alias="X-Token-Source"),
+):
+    """Return user id when token is valid, otherwise None for anonymous access."""
+    if not authorization:
+        return None
+
+    if not authorization.startswith("Bearer "):
+        logger.warning("Invalid authorization header format for optional auth")
+        return None
+
+    token = authorization.split(" ", 1)[1]
+
+    try:
+        if token_source == "firebase":
+            return firebase.verify_token(token).get("uid")
+
+        payload = jwt.decode(token, ENV.SECRET_KEY, algorithms=["HS256"])
+        return payload.get("id")
+    except Exception as e:
+        logger.warning(f"Optional auth token validation failed: {str(e)}")
+        return None
