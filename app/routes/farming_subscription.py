@@ -252,7 +252,7 @@ def order_farming_subscription_content(
     return {"status": 200, "message": "Content updated successfully"}
 
 
-@farming_rt.get("/{course_id}/live", status_code=status.HTTP_200_OK)
+@farming_rt.put("/{course_id}/live", status_code=status.HTTP_200_OK)
 def make_farming_subscription_live(course_id: str):
     """Make farming subscription live"""
     subscription = db.get_doc_ref(
@@ -268,7 +268,7 @@ def make_farming_subscription_live(course_id: str):
     return {"message": "Subscription is live now"}
 
 
-@farming_rt.get("/{course_id}/down", status_code=status.HTTP_200_OK)
+@farming_rt.put("/{course_id}/down", status_code=status.HTTP_200_OK)
 def take_farming_subscription_down(course_id: str):
     """Take farming subscription offline"""
     subscription = db.get_doc_ref(
