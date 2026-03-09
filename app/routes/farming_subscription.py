@@ -9,7 +9,7 @@ from app.model.course_model import ItemInfo, ItemInfoPayload, TextContentPayload
 from app.model.model import TableConfig, UserResponse
 from app.settings import ENV, logger
 from app.utils.image import compress_image, create_thumbnail_bytes
-from app.utils.security import get_user_id
+from app.utils.security import get_user_id_optional
 from app.utils.subs_manager import SubscriptionOfflineCreate, create_subscription
 
 
@@ -41,16 +41,17 @@ def get_all_farming_subscriptions():
 
 
 @farming_rt.get("/list/user", response_model=List[FarmingSubscriptionResponse], status_code=status.HTTP_200_OK)
-def get_farming_subscriptions_for_user(user_id: str = Depends(get_user_id)):
-    """Get all farming subscriptions with active status for a specific user"""
+def get_farming_subscriptions_for_user(user_id: Optional[str] = Depends(get_user_id_optional)):
+    """Get all live farming subscriptions and mark active when user is authenticated."""
     try:
-        # Get user data
-        user = db.read_data(TableConfig.USER.value, user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Get user's active farming subscriptions
-        user_farming_subs = user.get("farmingSubs", [])
+        user_farming_subs = []
+
+        if user_id:
+            # Enrich with user subscription status only when authenticated.
+            user = db.read_data(TableConfig.USER.value, user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            user_farming_subs = user.get("farmingSubs", [])
         
         # Get all farming subscriptions
         subscriptions = db.read_all_documents(TableConfig.FarmingSubscriptionCourse.value)
