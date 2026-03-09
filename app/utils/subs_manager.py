@@ -77,8 +77,8 @@ def create_subscription(
     if not item:
         raise HTTPException(404, "Course ID not found")
 
-    if int(item.get("price", 0)) != price_paid:
-        raise HTTPException(400, "Price mismatch")
+    # if int(item.get("price", 0)) != price_paid:
+    #     raise HTTPException(400, "Price mismatch")
 
     # Determine duration_days based on course_type
     if course_type == "pdf":
@@ -96,7 +96,7 @@ def create_subscription(
         course_id=data.course_id,
         start_date=datetime.now(),
         duration_days=duration_days,
-        price=price_paid,
+        price=int(item.get("price", 0)),
         order_id=data.order_id,
         expiry_date=expiry_date,
         type=course_type,
